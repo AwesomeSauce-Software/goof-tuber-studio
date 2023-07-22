@@ -83,6 +83,15 @@ public class CharacterAnimator : MonoBehaviour
     }
 
 
+    void AttemptLoadSprites()
+    {
+        var newNonTalking = DataSystem.LoadSprite("NonTalking.png");
+        sprites[0] = newNonTalking == null ? nonTalkingSprite : newNonTalking;
+
+        var newTalking = DataSystem.LoadSprite("Talking.png");
+        sprites[1] = newTalking == null ? talkingSprite : newTalking;
+    }
+
     void Update()
     {
         AnimateCharacter();    
@@ -90,6 +99,7 @@ public class CharacterAnimator : MonoBehaviour
 
     void Start()
     {
+        AttemptLoadSprites();
         SetupDefaultMicrophone();
         StartCoroutine(SampleNoise());
     }
