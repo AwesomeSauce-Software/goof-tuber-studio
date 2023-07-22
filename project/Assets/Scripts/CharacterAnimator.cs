@@ -42,7 +42,7 @@ public class CharacterAnimator : MonoBehaviour
         if (currentDevice.Length > 0)
             Microphone.End(currentDevice);
 
-        audioSource.clip = Microphone.Start(deviceName, true, 4, 44100);
+        audioSource.clip = Microphone.Start(deviceName, true, 1, 44100);
         currentDevice = deviceName;
         while (!(Microphone.GetPosition(deviceName) > 0)) { }
         audioSource.Play();
@@ -50,6 +50,7 @@ public class CharacterAnimator : MonoBehaviour
     
     void SetupDefaultMicrophone()
     {
+        Application.runInBackground = true;
         string device = "";
         if (Microphone.devices.Length > 0)
             device = Microphone.devices[0];
