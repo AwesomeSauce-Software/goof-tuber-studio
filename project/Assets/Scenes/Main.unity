@@ -272,7 +272,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   expressionImage: {fileID: 658608106}
-  CutOff: 0.00012
+  CutOff: 0.00022
   bobTime: 0.5
   bobSpeed: 5
   bobDistance: -0.35
