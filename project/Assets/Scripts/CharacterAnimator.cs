@@ -6,12 +6,20 @@ using UnityEngine;
 
 public class CharacterAnimator : MonoBehaviour
 {
+    [SerializeField] Image expressionImage;
     [Header("Audio Settings")]
-    public float MovementSensitivity;
     [Range(0.0f, 0.005f)] public float CutOff;
+    [SerializeField] float bobTime;
+    [SerializeField] float bobSpeed;
+    [SerializeField] float bobDistance;
     [Header("Sprites")]
     [SerializeField] Sprite nonTalkingSprite;
     [SerializeField] Sprite talkingSprite;
+    [SerializeField] List<Sprite> expressions;
+    [Header("Sprite File Names")]
+    [SerializeField] string nonTalkingFileName;
+    [SerializeField] string talkingFileName;
+    [SerializeField] List<string> expressionsFileNames;
 
     AudioSource audioSource;
     Image characterImage;
@@ -19,8 +27,11 @@ public class CharacterAnimator : MonoBehaviour
     string currentDevice = "";
     float noiseLevel;
 
-    Sprite[] sprites;
+    int currentExpression = -1;
+    Sprite[] talkingSprites;
     Vector3 initialPosition;
+
+    float bobTimer;
 
     public void SetupMicrophone(string deviceName)
     {
@@ -74,37 +85,81 @@ public class CharacterAnimator : MonoBehaviour
         yield return null;
     }
 
+    void UpdateExpression()
+    {
+        if (Input.GetKeyDown(KeyCode.Keypad0))
+        {
+            currentExpression++;
+            if (currentExpression >= expressions.Count)
+                currentExpression = -1;
+
+            if (currentExpression > -1)
+            {
+                expressionImage.enabled = true;
+                expressionImage.sprite = expressions[currentExpression];
+            }
+            else
+            {
+                expressionImage.enabled = false;
+            }
+        }
+    }
+
     void AnimateCharacter()
     {
         float meanVolume = GetMeanVolume();
-
         bool isTalking = meanVolume > CutOff + noiseLevel;
-        characterImage.sprite = sprites[isTalking ? 1 : 0];
-    }
+        float direction = isTalking ? 1.0f : -1.0f;
 
+        bobTimer += direction * bobSpeed * Time.deltaTime;
+        if (bobTimer > bobTime)
+        {
+            bobTimer = bobTime;
+        }
+        else if (bobTimer < 0.0f)
+        {
+            bobTimer = 0.0f;
+        }
+        
+        float t = bobTimer / bobTime;
+        var bob = Vector3.Lerp(initialPosition, initialPosition + (Vector3.up * bobDistance), t);
+
+        characterImage.sprite = talkingSprites[isTalking ? 1 : 0];
+        characterImage.transform.position = bob;
+        expressionImage.transform.position = bob;
+    }
 
     void AttemptLoadSprites()
     {
-        var newNonTalking = DataSystem.LoadSprite("NonTalking.png");
-        sprites[0] = newNonTalking == null ? nonTalkingSprite : newNonTalking;
+        var newNonTalking = DataSystem.LoadSprite(nonTalkingFileName);
+        talkingSprites[0] = newNonTalking == null ? nonTalkingSprite : newNonTalking;
 
-        var newTalking = DataSystem.LoadSprite("Talking.png");
-        sprites[1] = newTalking == null ? talkingSprite : newTalking;
+        var newTalking = DataSystem.LoadSprite(talkingFileName);
+        talkingSprites[1] = newTalking == null ? talkingSprite : newTalking;
+
+        for (int i = 0; i < expressions.Count; ++i)
+        {
+            var newExpression = DataSystem.LoadSprite(expressionsFileNames[i]);
+            if (newExpression != null)
+                expressions[i] = newExpression;
+        }
     }
 
     void Update()
     {
+        UpdateExpression();
         AnimateCharacter();    
     }
 
     void Start()
     {
+        expressionImage.enabled = false;
         AttemptLoadSprites();
         SetupDefaultMicrophone();
         StartCoroutine(SampleNoise());
     }
 
-    private void Awake()
+    void Awake()
     {
         audioSource = GetComponent<AudioSource>();
         audioSource.loop = true;
@@ -112,8 +167,8 @@ public class CharacterAnimator : MonoBehaviour
         characterImage = GetComponent<Image>();
         initialPosition = characterImage.transform.position;
 
-        sprites = new Sprite[2];
-        sprites[0] = nonTalkingSprite;
-        sprites[1] = talkingSprite;
+        talkingSprites = new Sprite[2];
+        talkingSprites[0] = nonTalkingSprite;
+        talkingSprites[1] = talkingSprite;
     }
 }
