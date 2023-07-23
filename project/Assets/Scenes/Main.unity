@@ -271,6 +271,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 89c7057624e8e114e8446770e29af22f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  spriteManager: {fileID: 852904248}
   expressionImage: {fileID: 658608106}
   CutOff: 0.00018
   bobTime: 0.5
