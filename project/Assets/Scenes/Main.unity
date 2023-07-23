@@ -136,7 +136,7 @@ GameObject:
   - component: {fileID: 20906841}
   - component: {fileID: 20906840}
   m_Layer: 0
-  m_Name: UserID InputField
+  m_Name: FriendUserID InputField
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -897,11 +897,12 @@ MonoBehaviour:
   spriteManager: {fileID: 478976185}
   characterManager: {fileID: 1412909702}
   userIDInputField: {fileID: 1661961639}
-  additionalUserIDInputField: {fileID: 0}
+  additionalUserIDInputField: {fileID: 20906840}
   verifyIDInputField: {fileID: 787407276}
   networkFolder: network
   sessionFileName: session
   uri: api.awesomesauce.software
+  friendID: 275678584712986624
 --- !u!4 &852904247
 Transform:
   m_ObjectHideFlags: 0
@@ -1032,7 +1033,7 @@ GameObject:
   - component: {fileID: 1135209327}
   - component: {fileID: 1135209326}
   m_Layer: 0
-  m_Name: UserID Enter
+  m_Name: FriendUserID Enter
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
