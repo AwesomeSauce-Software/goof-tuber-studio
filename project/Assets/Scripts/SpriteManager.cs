@@ -4,6 +4,12 @@ using UnityEngine;
 
 public abstract class SpriteCache : MonoBehaviour
 {
+    public int NonTalkingIndex { get; } = 0;
+    public int TalkingIndex { get; } = 1;
+
+    public int ExpressionIndex { get; } = 2;
+    public int ExpressionCount { get; protected set; } = 0;
+
     public abstract Sprite GetSprite(int index);
     public abstract Sprite GetExpression(string expressionCategory, int categoryIndex = 0);
     protected abstract void AttemptLoadSprites();
@@ -14,11 +20,6 @@ public class SpriteManager : SpriteCache
     [SerializeField] string spriteFolder;
     [SerializeField] string defaultExpressionCategory;
 
-    public int NonTalkingIndex { get; } = 0;
-    public int TalkingIndex { get; } = 1;
-
-    public int ExpressionIndex { get; } = 2;
-    public int ExpressionCount { get; private set; } = 0;
 
     List<Sprite> cachedSprites;
     Dictionary<string, List<Sprite>> expressionCategories;
@@ -72,6 +73,8 @@ public class SpriteManager : SpriteCache
     void SetupFolders()
     {
         spritePath = DataSystem.CreateSpace(spriteFolder);
+
+
     }
 
     void Awake()

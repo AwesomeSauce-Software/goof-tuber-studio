@@ -6,7 +6,7 @@ using UnityEngine;
 
 public class CharacterAnimator : MonoBehaviour
 {
-    [SerializeField] SpriteManager spriteManager;
+    [SerializeField] SpriteCache spriteManager;
     [SerializeField] Image expressionImage;
     [Header("Audio Settings")]
     [Range(0.0f, 0.005f)] public float CutOff;
