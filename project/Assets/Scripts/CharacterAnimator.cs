@@ -6,20 +6,13 @@ using UnityEngine;
 
 public class CharacterAnimator : MonoBehaviour
 {
+    [SerializeField] SpriteManager spriteManager;
     [SerializeField] Image expressionImage;
     [Header("Audio Settings")]
     [Range(0.0f, 0.005f)] public float CutOff;
     [SerializeField] float bobTime;
     [SerializeField] float bobSpeed;
     [SerializeField] float bobDistance;
-    [Header("Sprites")]
-    [SerializeField] Sprite nonTalkingSprite;
-    [SerializeField] Sprite talkingSprite;
-    [SerializeField] List<Sprite> expressions;
-    [Header("Sprite File Names")]
-    [SerializeField] string nonTalkingFileName;
-    [SerializeField] string talkingFileName;
-    [SerializeField] List<string> expressionsFileNames;
 
     AudioSource audioSource;
     Image characterImage;
@@ -91,13 +84,13 @@ public class CharacterAnimator : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Keypad0))
         {
             currentExpression++;
-            if (currentExpression >= expressions.Count)
+            if (currentExpression >= spriteManager.ExpressionCount)
                 currentExpression = -1;
-
+    
             if (currentExpression > -1)
             {
                 expressionImage.enabled = true;
-                expressionImage.sprite = expressions[currentExpression];
+                expressionImage.sprite = spriteManager.GetSprite(spriteManager.ExpressionIndex + currentExpression);
             }
             else
             {
@@ -105,13 +98,13 @@ public class CharacterAnimator : MonoBehaviour
             }
         }
     }
-
+    
     void AnimateCharacter()
     {
         float meanVolume = GetMeanVolume();
         bool isTalking = meanVolume > CutOff + noiseLevel;
         float direction = isTalking ? 1.0f : -1.0f;
-
+    
         bobTimer += direction * bobSpeed * Time.deltaTime;
         if (bobTimer > bobTime)
         {
@@ -124,26 +117,16 @@ public class CharacterAnimator : MonoBehaviour
         
         float t = bobTimer / bobTime;
         var bob = Vector3.Lerp(initialPosition, initialPosition + (Vector3.up * bobDistance), t);
-
+    
         characterImage.sprite = talkingSprites[isTalking ? 1 : 0];
         characterImage.transform.position = bob;
         expressionImage.transform.position = bob;
     }
-
-    void AttemptLoadSprites()
+    
+    void SetupSprites()
     {
-        var newNonTalking = DataSystem.LoadSprite(nonTalkingFileName);
-        talkingSprites[0] = newNonTalking == null ? nonTalkingSprite : newNonTalking;
-
-        var newTalking = DataSystem.LoadSprite(talkingFileName);
-        talkingSprites[1] = newTalking == null ? talkingSprite : newTalking;
-
-        for (int i = 0; i < expressions.Count; ++i)
-        {
-            var newExpression = DataSystem.LoadSprite(expressionsFileNames[i]);
-            if (newExpression != null)
-                expressions[i] = newExpression;
-        }
+        talkingSprites[0] = spriteManager.GetSprite(spriteManager.NonTalkingIndex);
+        talkingSprites[1] = spriteManager.GetSprite(spriteManager.TalkingIndex);
     }
 
     void Update()
@@ -151,11 +134,11 @@ public class CharacterAnimator : MonoBehaviour
         UpdateExpression();
         AnimateCharacter();    
     }
-
+    
     void Start()
     {
         expressionImage.enabled = false;
-        AttemptLoadSprites();
+        SetupSprites();
         SetupDefaultMicrophone();
         StartCoroutine(SampleNoise());
     }
@@ -169,7 +152,5 @@ public class CharacterAnimator : MonoBehaviour
         initialPosition = characterImage.transform.position;
 
         talkingSprites = new Sprite[2];
-        talkingSprites[0] = nonTalkingSprite;
-        talkingSprites[1] = talkingSprite;
     }
 }
