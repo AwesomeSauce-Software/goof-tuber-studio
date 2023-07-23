@@ -17,10 +17,12 @@ public abstract class SpriteCache : MonoBehaviour
 
 public class SpriteManager : SpriteCache
 {
+    public List<string> CachedSpritePaths => cachedSpritePaths;
+
     [SerializeField] string spriteFolder;
     [SerializeField] string defaultExpressionCategory;
 
-
+    List<string> cachedSpritePaths;
     List<Sprite> cachedSprites;
     Dictionary<string, List<Sprite>> expressionCategories;
     List<string> expressionCategoryNames;
@@ -39,11 +41,14 @@ public class SpriteManager : SpriteCache
     protected override void AttemptLoadSprites()
     {
         cachedSprites = new List<Sprite>();
+        cachedSpritePaths = new List<string>();
         expressionCategories = new Dictionary<string, List<Sprite>>();
         expressionCategoryNames = new List<string>();
 
         cachedSprites.Add(DataSystem.LoadSprite("NonTalking.png", spritePath));
         cachedSprites.Add(DataSystem.LoadSprite("Talking.png", spritePath));
+        cachedSpritePaths.Add(spritePath + "NonTalking.png");
+        cachedSpritePaths.Add(spritePath + "Talking.png");
 
         var expressions = DataSystem.GetFilesWithName("Expression_*", spritePath);
         foreach (var expressionPath in expressions)
@@ -51,11 +56,14 @@ public class SpriteManager : SpriteCache
             var expressionSprite = DataSystem.LoadSpriteFromPath(expressionPath);
             if (expressionSprite != null)
             {
-                var expressionName = expressionPath.Substring(spritePath.Length).Split('_');
+                var expressionName = expressionPath.Substring(spritePath.Length);
+                var nameSegments = expressionName.Split('_');
+
+                cachedSpritePaths.Add(expressionPath);
 
                 string category = defaultExpressionCategory;
-                if (expressionName.Length == 3)
-                    category = expressionName[1].ToLower();
+                if (nameSegments.Length == 3)
+                    category = nameSegments[1].ToLower();
 
                 if (!expressionCategories.ContainsKey(category))
                 {
@@ -73,8 +81,6 @@ public class SpriteManager : SpriteCache
     void SetupFolders()
     {
         spritePath = DataSystem.CreateSpace(spriteFolder);
-
-
     }
 
     void Awake()

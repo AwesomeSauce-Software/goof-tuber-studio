@@ -6,30 +6,50 @@ using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
 
+[System.Serializable]
 public class SessionPayload
 {
     public string message;
     public string session_id;
 }
 
+[System.Serializable]
+public class AvatarInternalPayload
+{
+    public string base64;
+    public string filename;
+}
+
+[System.Serializable]
+public class AvatarPayload
+{
+    public List<AvatarInternalPayload> internalPayload;
+}
+
+
 public class NetworkManager : MonoBehaviour
 {
+    [SerializeField] SpriteManager spriteManager;
     [SerializeField] CharacterManager characterManager;
     [Header("UI References")]
     [SerializeField] InputField userIDInputField;
+    [SerializeField] InputField additionalUserIDInputField;
     [SerializeField] InputField verifyIDInputField;
     [Header("Network Options")]
     [SerializeField] string networkFolder;
     [SerializeField] string sessionFileName;
     [SerializeField] string uri;
 
+    [SerializeField] string friendID;
+
+    List<string> verifiedUserIDs;
     string networkPath;
     string sessionFilePath;
     SessionPayload sessionPayload;
 
-    delegate void RequestCallBack(UnityWebRequest.Result result, string data);
+    delegate void GetRequestCallBack(long statusCode, string data);
 
-    IEnumerator GetRequest(RequestCallBack callback,  string additional = "")
+    IEnumerator GetRequest(GetRequestCallBack callback, string additional)
     {
         string data = "";
         using (UnityWebRequest webRequest = UnityWebRequest.Get("https://" + uri + '/' + additional))
@@ -39,24 +59,68 @@ public class NetworkManager : MonoBehaviour
             if (webRequest.result == UnityWebRequest.Result.Success)
                 data = webRequest.downloadHandler.text;
 
-            callback(webRequest.result, data);
+            callback(webRequest.responseCode, data);
         }
     }
 
-    void InitiateSessionCallback(UnityWebRequest.Result result, string data)
+    IEnumerator PostRequest(GetRequestCallBack callback, string additional, WWWForm uploadData)
     {
-        if (result == UnityWebRequest.Result.Success)
+        string downloadData = "";
+        using (UnityWebRequest webRequest = UnityWebRequest.Post("https://" + uri + '/' + additional, uploadData))
         {
-            Debug.Log($"Yippeee, {data}");
+            yield return webRequest.SendWebRequest();
+
+            if (webRequest.result == UnityWebRequest.Result.Success)
+                downloadData = webRequest.downloadHandler.text;
+
+            callback(webRequest.responseCode, downloadData);
         }
     }
 
-    void GetSessionIDCallback(UnityWebRequest.Result result, string data)
+    void InitiateSessionCallback(long result, string data)
     {
-        if (result == UnityWebRequest.Result.Success)
+        Debug.Log($"Verification ID result: {result} {data}");
+    }
+
+    void RquestSessionCallback(long result, string data)
+    {
+        Debug.Log($"Request session user ID result: {result} {data}");
+
+        // todo
+        //  check body message if result is successful
+        bool notVerified = result != 200;
+
+        if (notVerified)
+        {
+            verifiedUserIDs.RemoveAt(verifiedUserIDs.Count - 1);
+        }
+    }
+
+    void GetSessionIDCallback(long result, string data)
+    {
+        Debug.Log($"Session ID result: {result} {data}");
+        if (result == 200)
         {
             sessionPayload = JsonUtility.FromJson<SessionPayload>(data);
-            Debug.Log($"{sessionPayload.message}: {sessionPayload.session_id}");
+        }
+    }
+
+    void UploadAvatarsCallback(long result, string data)
+    {
+        Debug.Log($"Uploading Sprites result: {result} {data}");
+    }
+
+    void GetAvatarsCallback(long result, string data)
+    {
+        Debug.Log($"Get Avatars result: {result} {data}");
+        if (result == 200)
+        {
+            var avatarPayload = JsonUtility.FromJson<AvatarPayload>(data);
+
+            foreach (var serializedAvatar in avatarPayload.internalPayload)
+            {
+                Debug.Log($"{serializedAvatar.filename} \n\n {serializedAvatar.filename}");
+            }
         }
     }
 
@@ -65,9 +129,46 @@ public class NetworkManager : MonoBehaviour
         StartCoroutine(GetRequest(InitiateSessionCallback, $"verify/{userIDInputField.text}"));
     }
 
+    public void RequestSession()
+    {
+        if (sessionPayload != null)
+        {
+            verifiedUserIDs.Add(additionalUserIDInputField.text);
+            StartCoroutine(GetRequest(RquestSessionCallback, $"request-session/{sessionPayload.session_id}/{additionalUserIDInputField.text}"));
+        }
+    }
+
     public void GetSessionID()
     {
         StartCoroutine(GetRequest(GetSessionIDCallback, $"verify/{userIDInputField.text}/{verifyIDInputField.text}"));
+    }
+
+    public void GetAvatars()
+    {
+        if (sessionPayload != null && verifiedUserIDs.Count > 0)
+        {
+            foreach (var verifiedUserID in verifiedUserIDs)
+            {
+                Debug.Log($"Attempting to get avatars from {verifiedUserID}");
+                StartCoroutine(GetRequest(GetAvatarsCallback, $"get-avatars/{sessionPayload.session_id}/{verifiedUserID}"));
+            }
+        }
+    }
+
+    public void UploadAvatars()
+    {
+        if (sessionPayload != null)
+        {
+            var cachedSpritePaths = spriteManager.CachedSpritePaths;
+            WWWForm uploadForm = new WWWForm();
+
+            foreach (var cachedSpritePath in cachedSpritePaths)
+            {
+                uploadForm.AddBinaryData("avatar", File.ReadAllBytes(cachedSpritePath), Path.GetFileName(cachedSpritePath));
+            }
+
+            StartCoroutine(PostRequest(UploadAvatarsCallback, $"upload-avatar/{sessionPayload.session_id}", uploadForm));
+        }
     }
 
     public void SaveCache()
@@ -90,6 +191,9 @@ public class NetworkManager : MonoBehaviour
 
     void Awake()
     {
+        verifiedUserIDs = new List<string>();
+
+        //verifiedUserIDs.Add(friendID);
         LoadCache();
     }
 }

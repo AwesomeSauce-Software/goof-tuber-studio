@@ -15,11 +15,17 @@ public class NetworkManagerEditor : Editor
 
         EditorGUI.BeginDisabledGroup(!Application.isPlaying);
 
-        if (GUILayout.Button("Save Network Cache"))
+        var networkObject = target as NetworkManager;
+        if (networkObject != null)
         {
-            var networkObject = target as NetworkManager;
-            if (networkObject != null)
+            if (GUILayout.Button("Save Network Cache"))
                 networkObject.SaveCache();
+
+            if (GUILayout.Button("Upload Sprite Data"))
+                networkObject.UploadAvatars();
+
+            if (GUILayout.Button("Get Sprite Data"))
+                networkObject.GetAvatars();
         }
 
         EditorGUI.EndDisabledGroup();
