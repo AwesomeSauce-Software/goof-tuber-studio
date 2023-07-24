@@ -59,6 +59,7 @@ public class SpriteManager : SpriteCache
                 var expressionName = expressionPath.Substring(spritePath.Length);
                 var nameSegments = expressionName.Split('_');
 
+                expressionSprite.name = expressionName;
                 cachedSpritePaths.Add(expressionPath);
 
                 string category = defaultExpressionCategory;

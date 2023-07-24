@@ -6,6 +6,9 @@ using UnityEngine;
 
 public class CharacterAnimator : MonoBehaviour
 {
+    public float MeanVolume => meanVolume;
+    public string CurrentExpressionName => currentExpressionName;
+
     [SerializeField] SpriteCache spriteManager;
     [SerializeField] Image expressionImage;
     [Header("Audio Settings")]
@@ -19,8 +22,10 @@ public class CharacterAnimator : MonoBehaviour
 
     string currentDevice = "";
     float noiseLevel;
+    float meanVolume;
 
     int currentExpression = -1;
+    string currentExpressionName;
     Sprite[] talkingSprites;
     Vector3 initialPosition;
 
@@ -72,9 +77,6 @@ public class CharacterAnimator : MonoBehaviour
             meanedNoise /= 32.0f;
 
         noiseLevel = meanedNoise;
-#if UNITY_EDITOR
-        Debug.Log($"Noise level set to: {noiseLevel}");
-#endif
 
         yield return null;
     }
@@ -91,9 +93,11 @@ public class CharacterAnimator : MonoBehaviour
             {
                 expressionImage.enabled = true;
                 expressionImage.sprite = spriteManager.GetSprite(spriteManager.ExpressionIndex + currentExpression);
+                currentExpressionName = expressionImage.sprite.name;
             }
             else
             {
+                currentExpressionName = "";
                 expressionImage.enabled = false;
             }
         }
@@ -101,7 +105,7 @@ public class CharacterAnimator : MonoBehaviour
     
     void AnimateCharacter()
     {
-        float meanVolume = GetMeanVolume();
+        meanVolume = GetMeanVolume();
         bool isTalking = meanVolume > CutOff + noiseLevel;
         float direction = isTalking ? 1.0f : -1.0f;
     

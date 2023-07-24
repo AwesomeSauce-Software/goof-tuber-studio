@@ -1,3 +1,4 @@
+using NativeWebSocket;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
@@ -5,6 +6,19 @@ using System.IO;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
+
+[System.Serializable]
+public class SessionInformation
+{
+    public SessionPayload SessionPayload;
+    public List<string> VerifiedUserIDs;
+    public string DiscordID;
+
+    public SessionInformation()
+    {
+        VerifiedUserIDs = new List<string>();
+    }
+}
 
 [System.Serializable]
 public class SessionPayload
@@ -26,28 +40,44 @@ public class AvatarPayload
     public List<AvatarInternalPayload> internalPayload;
 }
 
+[System.Serializable]
+public class ActivityPayload
+{
+    public float voice_activity;
+    public string action;
+
+    public ActivityPayload(float newVoiceActivity, string newAction)
+    {
+        voice_activity = newVoiceActivity;
+        action = newAction;
+    }
+}
+
 
 public class NetworkManager : MonoBehaviour
 {
     [SerializeField] SpriteManager spriteManager;
+    [SerializeField] CharacterAnimator selfCharacter;
     [SerializeField] CharacterManager characterManager;
     [Header("UI References")]
     [SerializeField] InputField userIDInputField;
-    [SerializeField] InputField additionalUserIDInputField;
+    [SerializeField] InputField friendIDInputField;
     [SerializeField] InputField verifyIDInputField;
     [Header("Network Options")]
     [SerializeField] string networkFolder;
     [SerializeField] string sessionFileName;
     [SerializeField] string uri;
 
-    [SerializeField] string friendID;
+    WebSocket webSocket;
 
     List<string> verifiedUserIDs;
     string networkPath;
     string sessionFilePath;
-    SessionPayload sessionPayload;
+
+    SessionInformation sessionInfo;
 
     delegate void GetRequestCallBack(long statusCode, string data);
+    delegate void SessionRequestCallback(long statusCode, int userIndex);
 
     IEnumerator GetRequest(GetRequestCallBack callback, string additional)
     {
@@ -60,6 +90,16 @@ public class NetworkManager : MonoBehaviour
                 data = webRequest.downloadHandler.text;
 
             callback(webRequest.responseCode, data);
+        }
+    }
+
+    IEnumerator SessionRequest(SessionRequestCallback callback, int userIndex, string additional)
+    {
+        using (UnityWebRequest webRequest = UnityWebRequest.Get("https://" + uri + "/" + additional))
+        {
+            yield return webRequest.SendWebRequest();
+
+            callback(webRequest.responseCode, userIndex);
         }
     }
 
@@ -82,17 +122,13 @@ public class NetworkManager : MonoBehaviour
         Debug.Log($"Verification ID result: {result} {data}");
     }
 
-    void RquestSessionCallback(long result, string data)
+    void RquestSessionCallback(long result, int userIndex)
     {
-        Debug.Log($"Request session user ID result: {result} {data}");
+        Debug.Log($"Request session user ID result: {result}");
 
-        // todo
-        //  check body message if result is successful
-        bool notVerified = result != 200;
-
-        if (notVerified)
+        if (result != 200)
         {
-            verifiedUserIDs.RemoveAt(verifiedUserIDs.Count - 1);
+            verifiedUserIDs.RemoveAt(userIndex);
         }
     }
 
@@ -101,7 +137,8 @@ public class NetworkManager : MonoBehaviour
         Debug.Log($"Session ID result: {result} {data}");
         if (result == 200)
         {
-            sessionPayload = JsonUtility.FromJson<SessionPayload>(data);
+            sessionInfo.SessionPayload = JsonUtility.FromJson<SessionPayload>(data);
+            InitializeWebsocket();
         }
     }
 
@@ -131,10 +168,10 @@ public class NetworkManager : MonoBehaviour
 
     public void RequestSession()
     {
-        if (sessionPayload != null)
+        if (sessionInfo.SessionPayload != null)
         {
-            verifiedUserIDs.Add(additionalUserIDInputField.text);
-            StartCoroutine(GetRequest(RquestSessionCallback, $"request-session/{sessionPayload.session_id}/{additionalUserIDInputField.text}"));
+            StartCoroutine(SessionRequest(RquestSessionCallback, verifiedUserIDs.Count, $"request-session/{sessionInfo.SessionPayload.session_id}/{friendIDInputField.text}"));
+            verifiedUserIDs.Add(friendIDInputField.text);
         }
     }
 
@@ -145,19 +182,19 @@ public class NetworkManager : MonoBehaviour
 
     public void GetAvatars()
     {
-        if (sessionPayload != null && verifiedUserIDs.Count > 0)
+        if (sessionInfo.SessionPayload != null && verifiedUserIDs.Count > 0)
         {
             foreach (var verifiedUserID in verifiedUserIDs)
             {
                 Debug.Log($"Attempting to get avatars from {verifiedUserID}");
-                StartCoroutine(GetRequest(GetAvatarsCallback, $"get-avatars/{sessionPayload.session_id}/{verifiedUserID}"));
+                StartCoroutine(GetRequest(GetAvatarsCallback, $"get-avatars/{sessionInfo.SessionPayload.session_id}/{verifiedUserID}"));
             }
         }
     }
 
     public void UploadAvatars()
     {
-        if (sessionPayload != null)
+        if (sessionInfo.SessionPayload != null)
         {
             var cachedSpritePaths = spriteManager.CachedSpritePaths;
             WWWForm uploadForm = new WWWForm();
@@ -167,14 +204,30 @@ public class NetworkManager : MonoBehaviour
                 uploadForm.AddBinaryData("avatar", File.ReadAllBytes(cachedSpritePath), Path.GetFileName(cachedSpritePath));
             }
 
-            StartCoroutine(PostRequest(UploadAvatarsCallback, $"upload-avatar/{sessionPayload.session_id}", uploadForm));
+            StartCoroutine(PostRequest(UploadAvatarsCallback, $"upload-avatar/{sessionInfo.SessionPayload.session_id}", uploadForm));
         }
+    }
+
+    public async void InitializeWebsocket()
+    {
+        Debug.Log("Initializing Websocket");
+
+        webSocket = new WebSocket("ws://" + uri + "/send-data/" + sessionInfo.SessionPayload.session_id);
+
+        webSocket.OnError += (err) =>
+        {
+            Debug.LogError($"Websocket Error: {err}");
+        };
+
+        InvokeRepeating("SendWebsocketData", 0.0f, 0.01f);
+
+        await webSocket.Connect();
     }
 
     public void SaveCache()
     {
-        if (sessionPayload != null)
-            File.WriteAllText(sessionFilePath, JsonUtility.ToJson(sessionPayload));
+        if (sessionInfo.SessionPayload != null)
+            File.WriteAllText(sessionFilePath, JsonUtility.ToJson(sessionInfo.SessionPayload));
     }
 
     void LoadCache()
@@ -185,15 +238,23 @@ public class NetworkManager : MonoBehaviour
         if (File.Exists(sessionFilePath))
         {
             var serializedSessionPayload = File.ReadAllText(sessionFilePath);
-            sessionPayload = JsonUtility.FromJson<SessionPayload>(serializedSessionPayload);
+            sessionInfo = JsonUtility.FromJson<SessionInformation>(serializedSessionPayload);
+        }
+    }
+
+    async void SendWebsocketData()
+    {
+        if (webSocket.State == WebSocketState.Open)
+        {
+            var activityPayload = new ActivityPayload(selfCharacter.MeanVolume, selfCharacter.CurrentExpressionName);
+
+            await webSocket.SendText(JsonUtility.ToJson(activityPayload));
         }
     }
 
     void Awake()
     {
-        verifiedUserIDs = new List<string>();
-
-        //verifiedUserIDs.Add(friendID);
+        sessionInfo = new SessionInformation();
         LoadCache();
     }
 }

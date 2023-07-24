@@ -12,7 +12,7 @@ public class NetworkManagerEditor : Editor
         DrawDefaultInspector();
 
         EditorGUILayout.Space();
-
+        EditorGUILayout.LabelField("Networking Debug");
         EditorGUI.BeginDisabledGroup(!Application.isPlaying);
 
         var networkObject = target as NetworkManager;
@@ -20,6 +20,9 @@ public class NetworkManagerEditor : Editor
         {
             if (GUILayout.Button("Save Network Cache"))
                 networkObject.SaveCache();
+
+            if (GUILayout.Button("Initialize Websocket"))
+                networkObject.InitializeWebsocket();
 
             if (GUILayout.Button("Upload Sprite Data"))
                 networkObject.UploadAvatars();

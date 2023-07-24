@@ -481,6 +481,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 17078acf8dd7c7e4d9c11115c63893c4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &478976186 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2557452506126887816, guid: af26786bc3fcdbf4a9d85ec1f715f1ca, type: 3}
+  m_PrefabInstance: {fileID: 2557452506105913145}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 89c7057624e8e114e8446770e29af22f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
@@ -895,14 +906,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   spriteManager: {fileID: 478976185}
+  selfCharacter: {fileID: 478976186}
   characterManager: {fileID: 1412909702}
   userIDInputField: {fileID: 1661961639}
-  additionalUserIDInputField: {fileID: 20906840}
+  friendIDInputField: {fileID: 20906840}
   verifyIDInputField: {fileID: 787407276}
   networkFolder: network
   sessionFileName: session
   uri: api.awesomesauce.software
-  friendID: 275678584712986624
 --- !u!4 &852904247
 Transform:
   m_ObjectHideFlags: 0
