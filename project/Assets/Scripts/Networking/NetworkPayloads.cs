@@ -24,15 +24,21 @@ public class AvatarPayload
 [System.Serializable]
 public class ActivityPayload
 {
-    public string userid;
     public float voice_activity;
     public string action;
 }
 
 [System.Serializable]
-public class ActivitiesPayload
+public class ReceiveInternalActivitiyPayload
 {
-    public ActivityPayload[] data;
+    public string userid;
+    public ActivityPayload activity;
+}
+
+[System.Serializable]
+public class ReceiveActivitiyPayload
+{
+    public ReceiveInternalActivitiyPayload[] data;
 }
 
 [System.Serializable]

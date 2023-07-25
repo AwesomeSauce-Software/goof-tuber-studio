@@ -151,6 +151,28 @@ public class NetworkManager : MonoBehaviour
         if (HasSession)
         {
             var cachedSpritePaths = spriteManager.CachedSpritePaths;
+            var avatarPayload = new AvatarPayload();
+
+            avatarPayload.avatars = new AvatarInternalPayload[cachedSpritePaths.Count];
+            for (int i = 0; i < avatarPayload.avatars.Length; ++i)
+            {
+                avatarPayload.avatars[i] = new AvatarInternalPayload();
+
+                avatarPayload.avatars[i].base64 = System.Convert.ToBase64String(File.ReadAllBytes(cachedSpritePaths[i]));
+                avatarPayload.avatars[i].filename = Path.GetFileName(cachedSpritePaths[i]);
+            }
+
+            string uploadJSON = JsonUtility.ToJson(avatarPayload);
+
+            StartCoroutine(NetworkHelper.PostRequestRaw(UploadAvatarsCallback, uri, $"upload-avatar/{sessionInfo.SessionPayload.session_id}", uploadJSON));
+        }
+    }
+
+    public void UploadAvatarsDeprecated()
+    {
+        if (HasSession)
+        {
+            var cachedSpritePaths = spriteManager.CachedSpritePaths;
             WWWForm uploadForm = new WWWForm();
 
             foreach (var cachedSpritePath in cachedSpritePaths)
@@ -158,7 +180,7 @@ public class NetworkManager : MonoBehaviour
                 uploadForm.AddBinaryData("avatar", File.ReadAllBytes(cachedSpritePath), Path.GetFileName(cachedSpritePath));
             }
 
-            StartCoroutine(NetworkHelper.PostRequest(UploadAvatarsCallback, uri, $"upload-avatar/{sessionInfo.SessionPayload.session_id}", uploadForm));
+            StartCoroutine(NetworkHelper.PostRequestForm(UploadAvatarsCallback, uri, $"upload-avatar/{sessionInfo.SessionPayload.session_id}", uploadForm));
         }
     }
 
@@ -200,15 +222,19 @@ public class NetworkManager : MonoBehaviour
         string serializedData = System.Text.Encoding.UTF8.GetString(data);
         LogEx.Log(LogTopics.NetworkingWebsockets, $"Received Websocket Data: {serializedData}");
 
+        // json utility is ass (AwesomeSauce Software) :)
         if (serializedData.Length > 1 && serializedData.StartsWith("{"))
         {
-            var activityPayload = JsonUtility.FromJson<ActivitiesPayload>(serializedData);
-            LogEx.Log(LogTopics.NetworkingActivity, $"Activity Payload: {activityPayload.data[0].userid} {activityPayload.data[0].voice_activity} {activityPayload.data[0].action}");
-
-            var verifiedUser = verifiedUsers.Find(u => u.UserID == activityPayload.data[0].userid);
-            if (verifiedUser != null && verifiedUser.Character != null)
+            var activityPayload = JsonUtility.FromJson<ReceiveActivitiyPayload>(serializedData);
+            if (activityPayload.data.Length > 0)
             {
-                verifiedUser.Character.MeanVolume = activityPayload.data[0].voice_activity;
+                LogEx.Log(LogTopics.NetworkingActivity, $"Activity Payload: {activityPayload.data[0].userid} {activityPayload.data[0].activity.voice_activity} {activityPayload.data[0].activity.action}");
+
+                var verifiedUser = verifiedUsers.Find(u => u.UserID == activityPayload.data[0].userid);
+                if (verifiedUser != null && verifiedUser.Character != null)
+                {
+                    verifiedUser.Character.MeanVolume = activityPayload.data[0].activity.voice_activity;
+                }
             }
         }
     }

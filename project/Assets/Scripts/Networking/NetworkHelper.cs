@@ -47,11 +47,28 @@ public static class NetworkHelper
         }
     }
 
-    public static IEnumerator PostRequest(GetRequestCallBack callback, string uri, string additional, WWWForm uploadData)
+    public static IEnumerator PostRequestForm(GetRequestCallBack callback, string uri, string additional, WWWForm uploadData)
     {
         string downloadData = "";
         using (UnityWebRequest webRequest = UnityWebRequest.Post("https://" + uri + '/' + additional, uploadData))
         {
+            yield return webRequest.SendWebRequest();
+
+            if (webRequest.result == UnityWebRequest.Result.Success)
+                downloadData = webRequest.downloadHandler.text;
+
+            callback(webRequest.responseCode, downloadData);
+        }
+    }
+
+    public static IEnumerator PostRequestRaw(GetRequestCallBack callback, string uri, string additional, string uploadData)
+    {
+        string downloadData = "";
+        using (UnityWebRequest webRequest = new UnityWebRequest("https://" + uri + '/' + additional, UnityWebRequest.kHttpVerbPOST))
+        {
+            webRequest.downloadHandler = new DownloadHandlerBuffer();
+            webRequest.uploadHandler = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(uploadData));
+
             yield return webRequest.SendWebRequest();
 
             if (webRequest.result == UnityWebRequest.Result.Success)
