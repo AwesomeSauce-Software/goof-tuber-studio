@@ -27,12 +27,12 @@ public class ActivityPayload
     public string userid;
     public float voice_activity;
     public string action;
+}
 
-    public ActivityPayload(float newVoiceActivity, string newAction)
-    {
-        voice_activity = newVoiceActivity;
-        action = newAction;
-    }
+[System.Serializable]
+public class ActivitiesPayload
+{
+    public ActivityPayload[] data;
 }
 
 [System.Serializable]

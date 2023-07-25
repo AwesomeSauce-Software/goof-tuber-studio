@@ -89,7 +89,9 @@ public class NetworkManager : MonoBehaviour
 
             if (user.Character != null)
             {
-                user.Character.Initialize(characterManager.CreateExtSpriteManager(avatarPayload));
+                // todo
+                //  remove unecessary gameobject instantiation
+                user.Character.SetSpriteManager(characterManager.CreateExtSpriteManager(avatarPayload));
             }
             else
             {
@@ -188,13 +190,9 @@ public class NetworkManager : MonoBehaviour
         {
             LogEx.Error(LogTopics.NetworkingWebsockets, $"Websocket Error: {err}");
         };
-        masterSocket.OnMessage += (data) =>
-        {
-            LogEx.Log(LogTopics.NetworkingWebsockets, $"Received Websocket Data");
-            ReceiveWebsocketData(data);
-        };
+        masterSocket.OnMessage += ReceiveWebsocketData;
 
-        InvokeRepeating("SendWebsocketData", 0.0f, 0.05f);
+        InvokeRepeating("SendWebsocketData", 0.0f, 0.01f);
 
         await masterSocket.Connect();
     }
@@ -204,13 +202,15 @@ public class NetworkManager : MonoBehaviour
         string serializedData = System.Text.Encoding.UTF8.GetString(data);
         LogEx.Log(LogTopics.NetworkingWebsockets, $"Received Websocket Data: {serializedData}");
 
-        if (serializedData.Length > 0 && serializedData != "OK")
+        if (serializedData.Length > 1 && serializedData.StartsWith("{"))
         {
-            var activityPayload = JsonUtility.FromJson<ActivityPayload>(serializedData);
-            var verifiedUser = verifiedUsers.Find(u => u.UserID == activityPayload.userid);
+            var activityPayload = JsonUtility.FromJson<ActivitiesPayload>(serializedData);
+            LogEx.Log(LogTopics.NetworkingActivity, $"Activity Payload: {activityPayload.data[0].userid} {activityPayload.data[0].voice_activity} {activityPayload.data[0].action}");
+
+            var verifiedUser = verifiedUsers.Find(u => u.UserID == activityPayload.data[0].userid);
             if (verifiedUser != null && verifiedUser.Character != null)
             {
-                
+                verifiedUser.Character.MeanVolume = activityPayload.data[0].voice_activity;
             }
         }
     }
@@ -219,7 +219,9 @@ public class NetworkManager : MonoBehaviour
     {
         if (masterSocket.State == WebSocketState.Open)
         {
-            var activityPayload = new ActivityPayload(selfCharacter.MeanVolume, selfCharacter.CurrentExpressionName);
+            var activityPayload = new ActivityPayload();
+            activityPayload.voice_activity = selfCharacter.MeanVolume;
+            activityPayload.action = selfCharacter.CurrentExpressionName;
             LogEx.Log(LogTopics.NetworkingWebsocketsSending, $"Sending Websocket Data: {activityPayload.voice_activity}");
 
             await masterSocket.SendText("SEND " + JsonUtility.ToJson(activityPayload));
@@ -239,6 +241,11 @@ public class NetworkManager : MonoBehaviour
 
     public void SaveCache()
     {
+        List<string> userIDs = new List<string>();
+        foreach (var verifiedUser in verifiedUsers)
+            userIDs.Add(verifiedUser.UserID);
+        sessionInfo.VerifiedUserIDs = userIDs;
+
         File.WriteAllText(sessionFilePath, JsonUtility.ToJson(sessionInfo));
     }
 
@@ -253,7 +260,18 @@ public class NetworkManager : MonoBehaviour
         {
             var serializedSessionPayload = File.ReadAllText(sessionFilePath);
             sessionInfo = JsonUtility.FromJson<SessionInformation>(serializedSessionPayload);
+
+            foreach (var verifiedUserID in sessionInfo.VerifiedUserIDs)
+                AddUserID(verifiedUserID);
         }
+    }
+
+    void Update()
+    {
+#if !UNITY_WEBGL || UNITY_EDITOR
+        if (masterSocket != null)
+            masterSocket.DispatchMessageQueue();
+#endif
     }
 
     void Awake()

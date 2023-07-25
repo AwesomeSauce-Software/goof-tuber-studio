@@ -1,14 +1,15 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine.UI;
 using UnityEngine;
 
 public class CharacterAnimator : MonoBehaviour
 {
-    public float MeanVolume => meanVolume;
+    public float MeanVolume { get; set; }
     public string CurrentExpressionName => currentExpressionName;
+    public AudioCache AudioManager => audioManager;
 
+    [SerializeField] AudioInternalHandler audioManager;
     [SerializeField] SpriteCache spriteManager;
     [SerializeField] Image expressionImage;
     [Header("Audio Settings")]
@@ -17,12 +18,9 @@ public class CharacterAnimator : MonoBehaviour
     [SerializeField] float bobSpeed;
     [SerializeField] float bobDistance;
 
-    AudioSource audioSource;
     Image characterImage;
 
-    string currentDevice = "";
-    float noiseLevel;
-    float meanVolume;
+    AudioSource audioSource;
 
     int currentExpression = -1;
     string currentExpressionName;
@@ -31,60 +29,11 @@ public class CharacterAnimator : MonoBehaviour
 
     float bobTimer;
 
-    public void Initialize(SpriteCache newSpriteManager)
+    public void SetSpriteManager(SpriteCache newSpriteManager)
     {
         spriteManager = newSpriteManager;
     }
-
-    public void SetupMicrophone(string deviceName)
-    {
-        if (Microphone.devices.Length <= 0)
-            return;
-
-        audioSource.Stop();
-        if (currentDevice.Length > 0)
-            Microphone.End(currentDevice);
-
-        audioSource.clip = Microphone.Start(deviceName, true, 1, 44100);
-        currentDevice = deviceName;
-        while (!(Microphone.GetPosition(deviceName) > 0)) { }
-        audioSource.Play();
-    }
-    
-    void SetupDefaultMicrophone()
-    {
-        Application.runInBackground = true;
-        string device = "";
-        if (Microphone.devices.Length > 0)
-            device = Microphone.devices[0];
-        SetupMicrophone(device);
-    }
-
-    float GetMeanVolume()
-    {
-        float[] audioSamples = new float[1024];
-        audioSource.GetSpectrumData(audioSamples, 0, FFTWindow.Rectangular);
-        float meanVolume = audioSamples.Average();
-
-        return meanVolume;
-    }
-
-    IEnumerator SampleNoise()
-    {
-        float meanedNoise = 0.0f;
-        for (int i = 0; i < 32; ++i)
-        {
-            meanedNoise += GetMeanVolume();
-
-            yield return new WaitForSeconds(0.005f);
-        }
-        if (meanedNoise > 0.0f)
-            meanedNoise /= 32.0f;
-
-        noiseLevel = meanedNoise;
-
-        yield return null;
-    }
+ 
 
     void UpdateExpression()
     {
@@ -110,8 +59,7 @@ public class CharacterAnimator : MonoBehaviour
     
     void AnimateCharacter()
     {
-        meanVolume = GetMeanVolume();
-        bool isTalking = meanVolume > CutOff + noiseLevel;
+        bool isTalking = MeanVolume > CutOff;
         float direction = isTalking ? 1.0f : -1.0f;
     
         bobTimer += direction * bobSpeed * Time.deltaTime;
@@ -140,6 +88,8 @@ public class CharacterAnimator : MonoBehaviour
 
     void Update()
     {
+        if (audioManager != null)
+            MeanVolume = audioManager.MeanVolume;
         UpdateExpression();
         AnimateCharacter();    
     }
@@ -148,8 +98,6 @@ public class CharacterAnimator : MonoBehaviour
     {
         expressionImage.enabled = false;
         SetupSprites();
-        SetupDefaultMicrophone();
-        StartCoroutine(SampleNoise());
     }
 
     void Awake()

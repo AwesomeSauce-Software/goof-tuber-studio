@@ -11,7 +11,8 @@ public enum LogTopics
     Networking,
     NetworkingPinging,
     NetworkingWebsockets,
-    NetworkingWebsocketsSending
+    NetworkingWebsocketsSending,
+    NetworkingActivity
 }
 
 public static class LogEx

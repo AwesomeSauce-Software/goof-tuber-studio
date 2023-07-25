@@ -20,8 +20,10 @@ public class CharacterManager : MonoBehaviour
         var extCharacter = Instantiate(characterPrefab);
         var extSpriteManager = CreateExtSpriteManager(avatarPayload);
 
-        extCharacter.Initialize(extSpriteManager);
+        extCharacter.SetSpriteManager(extSpriteManager);
         extCharacter.transform.SetParent(transform);
+
+        extCharacter.transform.position = new Vector3(0.0f, 0.0f, 90.0f);
 
         return extCharacter;
     }
