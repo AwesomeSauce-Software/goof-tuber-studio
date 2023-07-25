@@ -34,14 +34,23 @@ public static class DataSystem
     {
         if (File.Exists(path))
         {
-            int tempWidth = 128, tempHeight = 128;
             byte[] imageBytes = File.ReadAllBytes(path);
-            Texture2D texture = new Texture2D(tempWidth, tempHeight, TextureFormat.RGBA32, false);
+            Texture2D texture = new Texture2D(1, 1, TextureFormat.RGBA32, false);
             texture.LoadImage(imageBytes);
             texture.filterMode = FilterMode.Point;
             return texture;
         }
         return null;
+    }
+
+    public static Sprite LoadSpriteFromBase64(string base64)
+    {
+        byte[] imageBytes = Convert.FromBase64String(base64);
+        Texture2D texture = new Texture2D(1, 1);
+        texture.LoadImage(imageBytes);
+        texture.filterMode = FilterMode.Point;
+        Sprite sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector3.one * 0.5f);
+        return sprite;
     }
 
     public static string[] GetFilesWithName(string name, string path)

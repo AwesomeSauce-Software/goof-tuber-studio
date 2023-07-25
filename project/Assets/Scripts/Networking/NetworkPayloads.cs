@@ -18,7 +18,7 @@ public class AvatarInternalPayload
 [System.Serializable]
 public class AvatarPayload
 {
-    public List<AvatarInternalPayload> internalPayload;
+    public AvatarInternalPayload[] avatars;
 }
 
 [System.Serializable]
@@ -31,5 +31,18 @@ public class ActivityPayload
     {
         voice_activity = newVoiceActivity;
         action = newAction;
+    }
+}
+
+[System.Serializable]
+public class VerifiedUser
+{
+    public string UserID;
+    public NativeWebSocket.WebSocket WebsocketReceiver;
+    public CharacterAnimator Character;
+
+    public VerifiedUser(string newUserID)
+    {
+        UserID = newUserID;
     }
 }

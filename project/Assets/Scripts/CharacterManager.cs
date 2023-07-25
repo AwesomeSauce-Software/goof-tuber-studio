@@ -6,6 +6,13 @@ public class CharacterManager : MonoBehaviour
 {
     [SerializeField] CharacterAnimator characterPrefab;
 
-    // todo
-    //  add CreateCharacter method
+    public CharacterAnimator CreateExtCharacter(SpriteExternalManager spriteManager)
+    {
+        var extCharacter = Instantiate(characterPrefab);
+        extCharacter.Initialize(spriteManager);
+
+        extCharacter.transform.parent = transform;
+
+        return extCharacter;
+    }
 }

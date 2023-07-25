@@ -6,7 +6,22 @@ using UnityEngine.Networking;
 public static class NetworkHelper
 {
     public delegate void GetRequestCallBack(long statusCode, string data);
-    public delegate void SessionRequestCallback(long statusCode, int userIndex);
+    public delegate void GetUserDataCallback(long statusCode, VerifiedUser user, string data);
+    public delegate void SessionRequestCallback(long statusCode, VerifiedUser user);
+
+    public static IEnumerator GetUserData(GetUserDataCallback callback, VerifiedUser user, string uri, string additional)
+    {
+        string data = "";
+        using (UnityWebRequest webRequest = UnityWebRequest.Get("https://" + uri + '/' + additional))
+        {
+            yield return webRequest.SendWebRequest();
+
+            if (webRequest.result == UnityWebRequest.Result.Success)
+                data = webRequest.downloadHandler.text;
+
+            callback(webRequest.responseCode, user, data);
+        }
+    }
 
     public static IEnumerator GetRequest(GetRequestCallBack callback, string uri, string additional)
     {
@@ -22,13 +37,13 @@ public static class NetworkHelper
         }
     }
 
-    public static IEnumerator SessionRequest(SessionRequestCallback callback, int userIndex, string uri, string additional)
+    public static IEnumerator SessionRequest(SessionRequestCallback callback, VerifiedUser user, string uri, string additional)
     {
         using (UnityWebRequest webRequest = UnityWebRequest.Get("https://" + uri + "/" + additional))
         {
             yield return webRequest.SendWebRequest();
 
-            callback(webRequest.responseCode, userIndex);
+            callback(webRequest.responseCode, user);
         }
     }
 

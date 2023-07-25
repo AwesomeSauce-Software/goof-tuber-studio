@@ -29,6 +29,16 @@ public static class LogEx
 #endif
     }
 
+    public static void Error(LogTopics topic, string message)
+    {
+#if UNITY_EDITOR
+        if (TopicEnabled(topic))
+        {
+            Debug.LogError($"<color=#00FFFF>{topic}</color>: <color=#AA2000>{message}</color>");
+        }
+#endif
+    }
+
     public static void Log(LogTopics topic, string message)
     {
 #if UNITY_EDITOR

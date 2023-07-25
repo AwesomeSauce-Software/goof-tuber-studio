@@ -21,14 +21,19 @@ public class NetworkManagerEditor : Editor
             if (GUILayout.Button("Save Network Cache"))
                 networkObject.SaveCache();
 
-            if (GUILayout.Button("Initialize Websocket"))
-                networkObject.InitializeWebsocket();
+            if (GUILayout.Button("Ping API"))
+                networkObject.PingAPI();
+
+            EditorGUI.BeginDisabledGroup(!networkObject.HasSession);
+            if (GUILayout.Button("Initialize Websocket Sender"))
+                networkObject.InitializeWebsocketSender();
 
             if (GUILayout.Button("Upload Sprite Data"))
                 networkObject.UploadAvatars();
 
             if (GUILayout.Button("Get Sprite Data"))
                 networkObject.GetAvatars();
+            EditorGUI.EndDisabledGroup();
         }
 
         EditorGUI.EndDisabledGroup();

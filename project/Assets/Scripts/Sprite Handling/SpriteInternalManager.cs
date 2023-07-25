@@ -2,20 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public abstract class SpriteCache : MonoBehaviour
-{
-    public int NonTalkingIndex { get; } = 0;
-    public int TalkingIndex { get; } = 1;
-
-    public int ExpressionIndex { get; } = 2;
-    public int ExpressionCount { get; protected set; } = 0;
-
-    public abstract Sprite GetSprite(int index);
-    public abstract Sprite GetExpression(string expressionCategory, int categoryIndex = 0);
-    protected abstract void AttemptLoadSprites();
-}
-
-public class SpriteManager : SpriteCache
+public class SpriteInternalManager : SpriteCache
 {
     public List<string> CachedSpritePaths => cachedSpritePaths;
 
@@ -23,14 +10,14 @@ public class SpriteManager : SpriteCache
     [SerializeField] string defaultExpressionCategory;
 
     List<string> cachedSpritePaths;
-    List<Sprite> cachedSprites;
+    Dictionary<string, Sprite> cachedSprites;
     Dictionary<string, List<Sprite>> expressionCategories;
     List<string> expressionCategoryNames;
     string spritePath;
 
-    public override Sprite GetSprite(int index)
+    public override Sprite GetSprite(string spriteName)
     {
-        return cachedSprites[index];
+        return cachedSprites[spriteName];
     }
 
     public override Sprite GetExpression(string expressionCategory, int categoryIndex = 0)
@@ -38,15 +25,15 @@ public class SpriteManager : SpriteCache
         return expressionCategories[expressionCategory][categoryIndex];
     }
 
-    protected override void AttemptLoadSprites()
+    void AttemptLoadSprites()
     {
-        cachedSprites = new List<Sprite>();
+        cachedSprites = new Dictionary<string, Sprite>();
         cachedSpritePaths = new List<string>();
         expressionCategories = new Dictionary<string, List<Sprite>>();
         expressionCategoryNames = new List<string>();
 
-        cachedSprites.Add(DataSystem.LoadSprite("NonTalking.png", spritePath));
-        cachedSprites.Add(DataSystem.LoadSprite("Talking.png", spritePath));
+        cachedSprites.Add("NonTalking.png", DataSystem.LoadSprite("NonTalking.png", spritePath));
+        cachedSprites.Add("Talking.png", DataSystem.LoadSprite("Talking.png", spritePath));
         cachedSpritePaths.Add(spritePath + "NonTalking.png");
         cachedSpritePaths.Add(spritePath + "Talking.png");
 
@@ -73,8 +60,7 @@ public class SpriteManager : SpriteCache
                 }
                 expressionCategories[category].Add(expressionSprite);
 
-                cachedSprites.Add(expressionSprite);
-                ExpressionCount++;
+                cachedSprites.Add(expressionName, expressionSprite);
             }
         }
     }

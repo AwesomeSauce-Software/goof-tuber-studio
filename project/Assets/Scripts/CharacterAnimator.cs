@@ -31,6 +31,11 @@ public class CharacterAnimator : MonoBehaviour
 
     float bobTimer;
 
+    public void Initialize(SpriteCache newSpriteManager)
+    {
+        spriteManager = newSpriteManager;
+    }
+
     public void SetupMicrophone(string deviceName)
     {
         if (Microphone.devices.Length <= 0)
@@ -85,21 +90,21 @@ public class CharacterAnimator : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Keypad0))
         {
-            currentExpression++;
-            if (currentExpression >= spriteManager.ExpressionCount)
-                currentExpression = -1;
-    
-            if (currentExpression > -1)
-            {
-                expressionImage.enabled = true;
-                expressionImage.sprite = spriteManager.GetSprite(spriteManager.ExpressionIndex + currentExpression);
-                currentExpressionName = expressionImage.sprite.name;
-            }
-            else
-            {
-                currentExpressionName = "";
-                expressionImage.enabled = false;
-            }
+            //currentExpression++;
+            //if (currentExpression >= spriteManager.ExpressionCount)
+            //    currentExpression = -1;
+            //
+            //if (currentExpression > -1)
+            //{
+            //    expressionImage.enabled = true;
+            //    expressionImage.sprite = spriteManager.GetSprite(spriteManager.ExpressionIndex + currentExpression);
+            //    currentExpressionName = expressionImage.sprite.name;
+            //}
+            //else
+            //{
+            //    currentExpressionName = "";
+            //    expressionImage.enabled = false;
+            //}
         }
     }
     
@@ -129,8 +134,8 @@ public class CharacterAnimator : MonoBehaviour
     
     void SetupSprites()
     {
-        talkingSprites[0] = spriteManager.GetSprite(spriteManager.NonTalkingIndex);
-        talkingSprites[1] = spriteManager.GetSprite(spriteManager.TalkingIndex);
+        talkingSprites[0] = spriteManager.GetSprite("NonTalking.png");
+        talkingSprites[1] = spriteManager.GetSprite("Talking.png");
     }
 
     void Update()
