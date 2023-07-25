@@ -5,11 +5,14 @@ using UnityEngine;
 
 public class CharacterAnimator : MonoBehaviour
 {
-    public float MeanVolume { get; set; }
+    public float MeanVolume
+    {
+        get { return audioManager.MeanVolume; }
+        set { audioManager.MeanVolume = value; }
+    }
     public string CurrentExpressionName => currentExpressionName;
-    public AudioCache AudioManager => audioManager;
 
-    [SerializeField] AudioInternalHandler audioManager;
+    [SerializeField] AudioCache audioManager;
     [SerializeField] SpriteCache spriteManager;
     [SerializeField] Image expressionImage;
     [Header("Audio Settings")]
@@ -20,20 +23,18 @@ public class CharacterAnimator : MonoBehaviour
 
     Image characterImage;
 
-    AudioSource audioSource;
-
-    int currentExpression = -1;
+    //int currentExpression = -1;
     string currentExpressionName;
     Sprite[] talkingSprites;
     Vector3 initialPosition;
 
     float bobTimer;
 
-    public void SetSpriteManager(SpriteCache newSpriteManager)
+    public void LoadAvatarPayload(AvatarPayload avatarPayload)
     {
-        spriteManager = newSpriteManager;
+        spriteManager.LoadAvatarPayload(avatarPayload);
+        SetupSprites();
     }
- 
 
     void UpdateExpression()
     {
@@ -88,8 +89,6 @@ public class CharacterAnimator : MonoBehaviour
 
     void Update()
     {
-        if (audioManager != null)
-            MeanVolume = audioManager.MeanVolume;
         UpdateExpression();
         AnimateCharacter();    
     }
@@ -102,8 +101,7 @@ public class CharacterAnimator : MonoBehaviour
 
     void Awake()
     {
-        audioSource = GetComponent<AudioSource>();
-        audioSource.loop = true;
+        audioManager = GetComponent<AudioCache>();
 
         characterImage = GetComponent<Image>();
         initialPosition = characterImage.transform.position;

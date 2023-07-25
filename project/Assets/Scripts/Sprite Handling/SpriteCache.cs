@@ -6,4 +6,5 @@ public abstract class SpriteCache : MonoBehaviour
 {
     public abstract Sprite GetSprite(string spriteName);
     public abstract Sprite GetExpression(string expressionCategory, int categoryIndex = 0);
+    public virtual void LoadAvatarPayload(AvatarPayload avatarPayload) { }
 }

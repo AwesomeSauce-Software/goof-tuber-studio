@@ -89,9 +89,7 @@ public class NetworkManager : MonoBehaviour
 
             if (user.Character != null)
             {
-                // todo
-                //  remove unecessary gameobject instantiation
-                user.Character.SetSpriteManager(characterManager.CreateExtSpriteManager(avatarPayload));
+                user.Character.LoadAvatarPayload(avatarPayload);
             }
             else
             {

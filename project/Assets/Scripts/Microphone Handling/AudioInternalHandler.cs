@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class AudioInternalHandler : AudioExternalHandler
 {
-    public AudioSource AudioSource;
+    AudioSource audioSource;
     string currentDevice = "";
     float noiseLevel;
 
@@ -14,14 +14,14 @@ public class AudioInternalHandler : AudioExternalHandler
         if (Microphone.devices.Length <= 0)
             return;
 
-        AudioSource.Stop();
+        audioSource.Stop();
         if (currentDevice.Length > 0)
             Microphone.End(currentDevice);
 
-        AudioSource.clip = Microphone.Start(deviceName, true, 1, 44100);
+        audioSource.clip = Microphone.Start(deviceName, true, 1, 44100);
         currentDevice = deviceName;
         while (!(Microphone.GetPosition(deviceName) > 0)) { }
-        AudioSource.Play();
+        audioSource.Play();
     }
 
     void SetupDefaultMicrophone()
@@ -36,7 +36,7 @@ public class AudioInternalHandler : AudioExternalHandler
     float GetMeanVolume()
     {
         float[] audioSamples = new float[1024];
-        AudioSource.GetSpectrumData(audioSamples, 0, FFTWindow.Rectangular);
+        audioSource.GetSpectrumData(audioSamples, 0, FFTWindow.Rectangular);
         float meanVolume = audioSamples.Average();
 
         return meanVolume;
@@ -71,6 +71,8 @@ public class AudioInternalHandler : AudioExternalHandler
 
     void Awake()
     {
+        audioSource = GetComponent<AudioSource>();
+        audioSource.loop = true;
         StartCoroutine(SampleNoise());
     }
 }

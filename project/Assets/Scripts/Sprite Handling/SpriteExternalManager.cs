@@ -16,7 +16,7 @@ public class SpriteExternalManager : SpriteCache
         return null;
     }
 
-    public void AttemptLoadSprites(AvatarPayload avatarPayload)
+    public override void LoadAvatarPayload(AvatarPayload avatarPayload)
     {
         cachedSprites = new Dictionary<string, Sprite>();
 

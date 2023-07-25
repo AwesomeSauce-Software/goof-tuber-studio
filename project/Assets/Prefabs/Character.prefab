@@ -222,6 +222,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   MeanVolume: 0
+  AudioSource: {fileID: 2557452506126887817}
 --- !u!1 &2557452506621907153
 GameObject:
   m_ObjectHideFlags: 0
