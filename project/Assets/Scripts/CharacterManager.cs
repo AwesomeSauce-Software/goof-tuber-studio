@@ -9,10 +9,10 @@ public class CharacterManager : MonoBehaviour
     public CharacterAnimator CreateExtCharacter(AvatarPayload avatarPayload)
     {
         var extCharacter = Instantiate(characterPrefab);
-        extCharacter.LoadAvatarPayload(avatarPayload);
 
+        extCharacter.LoadAvatarPayload(avatarPayload);
         extCharacter.transform.SetParent(transform);
-        extCharacter.transform.position = new Vector3(0.0f, 0.0f, 90.0f);
+        extCharacter.transform.localScale = Vector3.one;
 
         return extCharacter;
     }

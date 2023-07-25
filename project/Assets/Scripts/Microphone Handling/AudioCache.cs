@@ -4,5 +4,5 @@ using UnityEngine;
 
 public class AudioCache : MonoBehaviour
 {
-    [HideInInspector] public float MeanVolume;
+    [HideInInspector] public float MeanVolume = 0.0f;
 }

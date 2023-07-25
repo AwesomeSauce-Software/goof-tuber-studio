@@ -11,6 +11,8 @@ public class CharacterAnimator : MonoBehaviour
         set { audioManager.MeanVolume = value; }
     }
     public string CurrentExpressionName => currentExpressionName;
+    public Image CharacterImage => characterImage;
+    public Vector3 InitialPosition;
 
     [SerializeField] AudioCache audioManager;
     [SerializeField] SpriteCache spriteManager;
@@ -26,7 +28,6 @@ public class CharacterAnimator : MonoBehaviour
     //int currentExpression = -1;
     string currentExpressionName;
     Sprite[] talkingSprites;
-    Vector3 initialPosition;
 
     float bobTimer;
 
@@ -49,6 +50,7 @@ public class CharacterAnimator : MonoBehaviour
             //    expressionImage.enabled = true;
             //    expressionImage.sprite = spriteManager.GetSprite(spriteManager.ExpressionIndex + currentExpression);
             //    currentExpressionName = expressionImage.sprite.name;
+            //    expressionImage.SetNativeSize();
             //}
             //else
             //{
@@ -73,18 +75,19 @@ public class CharacterAnimator : MonoBehaviour
             bobTimer = 0.0f;
         }
         
-        float t = bobTimer / bobTime;
-        var bob = Vector3.Lerp(initialPosition, initialPosition + (Vector3.up * bobDistance), t);
+        float t = Mathf.Clamp01(bobTimer / bobTime);
+        var bob = Vector3.Lerp(InitialPosition, InitialPosition + (Vector3.up * bobDistance), t);
     
         characterImage.sprite = talkingSprites[isTalking ? 1 : 0];
-        characterImage.transform.position = bob;
-        expressionImage.transform.position = bob;
+        characterImage.rectTransform.anchoredPosition = bob;
     }
     
     void SetupSprites()
     {
         talkingSprites[0] = spriteManager.GetSprite("NonTalking.png");
         talkingSprites[1] = spriteManager.GetSprite("Talking.png");
+
+        characterImage.SetNativeSize();
     }
 
     void Update()
@@ -92,7 +95,7 @@ public class CharacterAnimator : MonoBehaviour
         UpdateExpression();
         AnimateCharacter();    
     }
-    
+
     void Start()
     {
         expressionImage.enabled = false;
@@ -104,7 +107,7 @@ public class CharacterAnimator : MonoBehaviour
         audioManager = GetComponent<AudioCache>();
 
         characterImage = GetComponent<Image>();
-        initialPosition = characterImage.transform.position;
+        InitialPosition = characterImage.rectTransform.anchoredPosition;
 
         talkingSprites = new Sprite[2];
     }

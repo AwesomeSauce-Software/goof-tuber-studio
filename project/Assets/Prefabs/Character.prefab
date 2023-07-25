@@ -41,7 +41,7 @@ RectTransform:
   m_AnchorMax: {x: 0.75, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_Pivot: {x: 0.5, y: 0}
 --- !u!222 &2557452506126887818
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -92,6 +92,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 89c7057624e8e114e8446770e29af22f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  InitialPosition: {x: 0, y: 0, z: 0}
   audioManager: {fileID: 5908138055753267092}
   spriteManager: {fileID: 2381464011543029524}
   expressionImage: {fileID: 2557452506621907155}
@@ -222,7 +223,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   MeanVolume: 0
-  AudioSource: {fileID: 2557452506126887817}
 --- !u!1 &2557452506621907153
 GameObject:
   m_ObjectHideFlags: 0
@@ -255,11 +255,11 @@ RectTransform:
   m_Father: {fileID: 2557452506126887830}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMin: {x: 0.5, y: 0}
+  m_AnchorMax: {x: 0.5, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_SizeDelta: {x: 128, y: 128}
+  m_Pivot: {x: 0.5, y: 0}
 --- !u!222 &2557452506621907154
 CanvasRenderer:
   m_ObjectHideFlags: 0
