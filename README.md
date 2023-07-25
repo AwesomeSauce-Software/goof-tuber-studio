@@ -8,5 +8,6 @@ no aliens (real)
 - [ ] Replace character image component with sprite component
 - [ ] Add back expressions
 - [ ] Implement moving options in CharacterManager, as well as per character options
-- [ ] Overhaul UI
+- [ ] Find better microphone library
 - [ ] Migrate project to 2021 LTS for deeplink support
+- [ ] Overhaul UI
