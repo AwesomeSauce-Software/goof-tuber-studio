@@ -45,12 +45,12 @@ public class NetworkManager : MonoBehaviour
     #region Callbacks
     void InitiateSessionCallback(long result, string data)
     {
-        Debug.Log($"Verification ID result: {result} {data}");
+        LogEx.Log(LogTopics.Networking, $"Verification ID result: {result} {data}");
     }
 
     void RquestSessionCallback(long result, int userIndex)
     {
-        Debug.Log($"Request session user ID result: {result}");
+        LogEx.Log(LogTopics.Networking, $"Request session user ID result: {result}");
 
         if (result != 200)
         {
@@ -60,7 +60,7 @@ public class NetworkManager : MonoBehaviour
 
     void GetSessionIDCallback(long result, string data)
     {
-        Debug.Log($"Session ID result: {result} {data}");
+        LogEx.Log(LogTopics.Networking, $"Session ID result: {result} {data}");
         if (result == 200)
         {
             sessionInfo.SessionPayload = JsonUtility.FromJson<SessionPayload>(data);
@@ -70,19 +70,19 @@ public class NetworkManager : MonoBehaviour
 
     void UploadAvatarsCallback(long result, string data)
     {
-        Debug.Log($"Uploading Sprites result: {result} {data}");
+        LogEx.Log(LogTopics.Networking, $"Uploading Sprites result: {result} {data}");
     }
 
     void GetAvatarsCallback(long result, string data)
     {
-        Debug.Log($"Get Avatars result: {result} {data}");
+        LogEx.Log(LogTopics.Networking, $"Get Avatars result: {result} {data}");
         if (result == 200)
         {
             var avatarPayload = JsonUtility.FromJson<AvatarPayload>(data);
 
             foreach (var serializedAvatar in avatarPayload.internalPayload)
             {
-                Debug.Log($"{serializedAvatar.filename} \n\n {serializedAvatar.filename}");
+                LogEx.Log(LogTopics.Networking, $"{serializedAvatar.filename} \n\n {serializedAvatar.filename}");
             }
         }
     }
@@ -114,7 +114,7 @@ public class NetworkManager : MonoBehaviour
         {
             foreach (var verifiedUserID in verifiedUserIDs)
             {
-                Debug.Log($"Attempting to get avatars from {verifiedUserID}");
+                LogEx.Log(LogTopics.Networking, $"Attempting to get avatars from {verifiedUserID}");
                 StartCoroutine(NetworkHelper.GetRequest(GetAvatarsCallback, uri, $"get-avatars/{sessionInfo.SessionPayload.session_id}/{verifiedUserID}"));
             }
         }
@@ -140,7 +140,7 @@ public class NetworkManager : MonoBehaviour
     #region Websockets
     public async void InitializeWebsocket()
     {
-        Debug.Log("Initializing Websocket");
+        LogEx.Log(LogTopics.Networking, "Initializing Websocket");
 
         webSocket = new WebSocket("ws://" + uri + "/send-data/" + sessionInfo.SessionPayload.session_id);
 
@@ -167,8 +167,7 @@ public class NetworkManager : MonoBehaviour
 
     public void SaveCache()
     {
-        if (sessionInfo.SessionPayload != null)
-            File.WriteAllText(sessionFilePath, JsonUtility.ToJson(sessionInfo.SessionPayload));
+        File.WriteAllText(sessionFilePath, JsonUtility.ToJson(sessionInfo));
     }
 
     void LoadCache()
@@ -182,8 +181,6 @@ public class NetworkManager : MonoBehaviour
             sessionInfo = JsonUtility.FromJson<SessionInformation>(serializedSessionPayload);
         }
     }
-
-
 
     void Awake()
     {
