@@ -2,6 +2,7 @@ using NativeWebSocket;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
@@ -35,9 +36,9 @@ public class NetworkManager : MonoBehaviour
     [SerializeField] string sessionFileName;
     [SerializeField] string uri;
 
-    WebSocket websocketSender;
+    WebSocket masterSocket;
     System.DateTime apiRequestTime;
-    System.DateTime apiResponseTime;
+    List<double> apiResponseTimes;
 
     string networkPath;
     string sessionFilePath;
@@ -56,7 +57,6 @@ public class NetworkManager : MonoBehaviour
         LogEx.Log(LogTopics.Networking, $"Request session user ID result: {result}");
         if (result == 200)
         {
-            AddWebsocketReceiver(user, "ws://" + uri + "/receive-data/" + sessionInfo.SessionPayload.session_id + '/' + user.UserID);
             if (!sessionInfo.VerifiedUserIDs.Contains(user.UserID))
                 sessionInfo.VerifiedUserIDs.Add(user.UserID);
         }
@@ -86,15 +86,14 @@ public class NetworkManager : MonoBehaviour
         if (result == 200)
         {
             var avatarPayload = JsonUtility.FromJson<AvatarPayload>(data);
-            var spriteExtManager = new SpriteExternalManager(avatarPayload);
 
             if (user.Character != null)
             {
-                user.Character.Initialize(spriteExtManager);
+                user.Character.Initialize(characterManager.CreateExtSpriteManager(avatarPayload));
             }
             else
             {
-                user.Character = characterManager.CreateExtCharacter(spriteExtManager);
+                user.Character = characterManager.CreateExtCharacter(avatarPayload);
             }
 
 #if UNITY_EDITOR
@@ -108,8 +107,9 @@ public class NetworkManager : MonoBehaviour
 
     void PingAPICallback(long result, string data)
     {
-        apiResponseTime = System.DateTime.Now;
-        LogEx.Log(LogTopics.Networking, $"API Ping: {result} {(apiResponseTime - apiRequestTime).TotalMilliseconds}ms");
+        var apiResponseTime = System.DateTime.Now - apiRequestTime;
+        LogEx.Log(LogTopics.NetworkingPinging, $"API Ping: {result} {apiResponseTime.TotalMilliseconds}ms");
+        apiResponseTimes.Add(apiResponseTime.TotalMilliseconds);
     }
     #endregion
 
@@ -170,65 +170,72 @@ public class NetworkManager : MonoBehaviour
     #endregion
 
     #region Websockets
-    public async void InitializeWebsocketSender()
+    public async void InitializeWebsocket()
     {
-        LogEx.Log(LogTopics.Networking, "Initializing Websocket Sender");
+        List<string> userIDs = new List<string>();
+        foreach (var verifiedUser in verifiedUsers)
+            userIDs.Add(verifiedUser.UserID);
+        string url = "ws://" + uri + "/websocket/" + sessionInfo.SessionPayload.session_id + '/' + string.Join(",", userIDs);
+        LogEx.Log(LogTopics.NetworkingWebsockets, $"Initializing Websocket: {url}");
 
-        websocketSender = new WebSocket("ws://" + uri + "/send-data/" + sessionInfo.SessionPayload.session_id);
+        masterSocket = new WebSocket(url);
 
-        websocketSender.OnError += (err) =>
+        masterSocket.OnOpen += () =>
         {
-            LogEx.Error(LogTopics.Networking, $"Websocket Sender Error: {err}");
+            LogEx.Log(LogTopics.NetworkingWebsockets, "Websocket Opened");
+        };
+        masterSocket.OnError += (err) =>
+        {
+            LogEx.Error(LogTopics.NetworkingWebsockets, $"Websocket Error: {err}");
+        };
+        masterSocket.OnMessage += (data) =>
+        {
+            LogEx.Log(LogTopics.NetworkingWebsockets, $"Received Websocket Data");
+            ReceiveWebsocketData(data);
         };
 
         InvokeRepeating("SendWebsocketData", 0.0f, 0.05f);
 
-        await websocketSender.Connect();
+        await masterSocket.Connect();
     }
 
-    async void AddWebsocketReceiver(VerifiedUser user, string url)
+    void ReceiveWebsocketData(byte[] data)
     {
-        LogEx.Log(LogTopics.Networking, "Instantiating Websocket Receiver");
+        string serializedData = System.Text.Encoding.UTF8.GetString(data);
+        LogEx.Log(LogTopics.NetworkingWebsockets, $"Received Websocket Data: {serializedData}");
 
-        user.WebsocketReceiver = new WebSocket(url);
-
-        user.WebsocketReceiver.OnError += (err) =>
+        if (serializedData.Length > 0 && serializedData != "OK")
         {
-            LogEx.Error(LogTopics.Networking, $"Websocket Receiver Error: {err}");
-        };
-        user.WebsocketReceiver.OnMessage += (data) =>
-        {
-            ReceiveWebsocketData(user, data);
-        };
-
-        await user.WebsocketReceiver.Connect();
-    }
-
-    void ReceiveWebsocketData(VerifiedUser user, byte[] data)
-    {
-        LogEx.Log(LogTopics.Networking, $"Receiving Websocket Data: {System.Text.Encoding.UTF8.GetString(data)}");
-
-        if (user.Character != null)
-        {
-            // Update user character with activity information
+            var activityPayload = JsonUtility.FromJson<ActivityPayload>(serializedData);
+            var verifiedUser = verifiedUsers.Find(u => u.UserID == activityPayload.userid);
+            if (verifiedUser != null && verifiedUser.Character != null)
+            {
+                
+            }
         }
     }
 
     async void SendWebsocketData()
     {
-        if (websocketSender.State == WebSocketState.Open)
+        if (masterSocket.State == WebSocketState.Open)
         {
             var activityPayload = new ActivityPayload(selfCharacter.MeanVolume, selfCharacter.CurrentExpressionName);
-            LogEx.Log(LogTopics.Networking, $"Sending Websocket Data: {activityPayload.ToString()}");
+            LogEx.Log(LogTopics.NetworkingWebsocketsSending, $"Sending Websocket Data: {activityPayload.voice_activity}");
 
-            await websocketSender.SendText(JsonUtility.ToJson(activityPayload));
+            await masterSocket.SendText("SEND " + JsonUtility.ToJson(activityPayload));
         }
-        else if (websocketSender.State == WebSocketState.Closed)
+        else if (masterSocket.State == WebSocketState.Closed)
         {
-            CancelInvoke("SendWebsocketData");
+            CancelInvoke("PollWebsocketData");
         }
     }
     #endregion
+
+    public void AddUserID(string userID)
+    {
+        var user = new VerifiedUser(userID);
+        verifiedUsers.Add(user);
+    }
 
     public void SaveCache()
     {
@@ -251,6 +258,7 @@ public class NetworkManager : MonoBehaviour
 
     void Awake()
     {
+        apiResponseTimes = new List<double>();
         LoadCache();
     }
 }

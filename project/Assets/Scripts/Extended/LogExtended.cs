@@ -8,7 +8,10 @@ using UnityEditor;
 
 public enum LogTopics
 {
-    Networking
+    Networking,
+    NetworkingPinging,
+    NetworkingWebsockets,
+    NetworkingWebsocketsSending
 }
 
 public static class LogEx

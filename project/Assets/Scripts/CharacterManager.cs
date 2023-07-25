@@ -5,13 +5,23 @@ using UnityEngine;
 public class CharacterManager : MonoBehaviour
 {
     [SerializeField] CharacterAnimator characterPrefab;
+    [SerializeField] SpriteExternalManager spriteExtManagerPrefab;
 
-    public CharacterAnimator CreateExtCharacter(SpriteExternalManager spriteManager)
+    public SpriteExternalManager CreateExtSpriteManager(AvatarPayload avatarPayload)
+    {
+        var extSpriteManager = Instantiate(spriteExtManagerPrefab);
+        extSpriteManager.AttemptLoadSprites(avatarPayload);
+
+        return extSpriteManager;
+    }
+
+    public CharacterAnimator CreateExtCharacter(AvatarPayload avatarPayload)
     {
         var extCharacter = Instantiate(characterPrefab);
-        extCharacter.Initialize(spriteManager);
+        var extSpriteManager = CreateExtSpriteManager(avatarPayload);
 
-        extCharacter.transform.parent = transform;
+        extCharacter.Initialize(extSpriteManager);
+        extCharacter.transform.SetParent(transform);
 
         return extCharacter;
     }

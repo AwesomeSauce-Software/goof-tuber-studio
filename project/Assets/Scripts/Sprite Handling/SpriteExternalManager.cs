@@ -16,7 +16,7 @@ public class SpriteExternalManager : SpriteCache
         return null;
     }
 
-    void AttemptLoadSprites(AvatarPayload avatarPayload)
+    public void AttemptLoadSprites(AvatarPayload avatarPayload)
     {
         cachedSprites = new Dictionary<string, Sprite>();
 
@@ -29,8 +29,4 @@ public class SpriteExternalManager : SpriteCache
         }
     }
 
-    public SpriteExternalManager(AvatarPayload avatarPayload)
-    {
-        AttemptLoadSprites(avatarPayload);
-    }
 }

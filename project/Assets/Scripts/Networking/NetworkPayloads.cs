@@ -24,6 +24,7 @@ public class AvatarPayload
 [System.Serializable]
 public class ActivityPayload
 {
+    public string userid;
     public float voice_activity;
     public string action;
 
@@ -38,7 +39,6 @@ public class ActivityPayload
 public class VerifiedUser
 {
     public string UserID;
-    public NativeWebSocket.WebSocket WebsocketReceiver;
     public CharacterAnimator Character;
 
     public VerifiedUser(string newUserID)

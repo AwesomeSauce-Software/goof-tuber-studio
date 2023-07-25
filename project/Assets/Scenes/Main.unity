@@ -1693,7 +1693,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 60272976c7a7f6e41962bbfc6a758a6d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  characterPrefab: {fileID: 2557452506126887816, guid: af26786bc3fcdbf4a9d85ec1f715f1ca, type: 3}
+  characterPrefab: {fileID: 2557452506126887816, guid: aa57a8693201c4946b20455f5686c3f3, type: 3}
+  spriteExtManagerPrefab: {fileID: 6316643255010101302, guid: 3f0a12e30c8013f4ea20e75b6c7785b2, type: 3}
 --- !u!1 &1612318843
 GameObject:
   m_ObjectHideFlags: 0

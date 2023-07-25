@@ -7,6 +7,8 @@ using UnityEditor;
 [CustomEditor(typeof(NetworkManager))]
 public class NetworkManagerEditor : Editor
 {
+    string userIDLabel;
+
     public override void OnInspectorGUI()
     {
         DrawDefaultInspector();
@@ -25,14 +27,22 @@ public class NetworkManagerEditor : Editor
                 networkObject.PingAPI();
 
             EditorGUI.BeginDisabledGroup(!networkObject.HasSession);
-            if (GUILayout.Button("Initialize Websocket Sender"))
-                networkObject.InitializeWebsocketSender();
+            if (GUILayout.Button("Initialize Websocket"))
+                networkObject.InitializeWebsocket();
 
             if (GUILayout.Button("Upload Sprite Data"))
                 networkObject.UploadAvatars();
 
             if (GUILayout.Button("Get Sprite Data"))
                 networkObject.GetAvatars();
+
+            EditorGUILayout.BeginHorizontal();
+            userIDLabel = EditorGUILayout.TextField(userIDLabel);
+            if (GUILayout.Button("Add Verified User ID"))
+            {
+                networkObject.AddUserID(userIDLabel);
+            }
+            EditorGUILayout.EndHorizontal();
             EditorGUI.EndDisabledGroup();
         }
 
