@@ -57,7 +57,7 @@ public class CharacterManager : MonoBehaviour
             var sprite = character.CharacterRenderer.sprite;
 
             var position = Vector3.Lerp(lineMaxRight, lineMaxLeft, spacing);
-            position.y += sprite.bounds.size.y * (1.0f / sprite.pixelsPerUnit);
+            //position.y += sprite.bounds.size.y * (1.0f / sprite.pixelsPerUnit);
             position.z = i * 0.001f;
 
             character.InitialPosition = position;

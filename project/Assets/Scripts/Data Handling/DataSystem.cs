@@ -18,7 +18,7 @@ public static class DataSystem
 
         if (texture != null)
         {
-            Sprite sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector3(0.5f, 0.5f));
+            Sprite sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector3(0.5f, 0.0f));
             return sprite;
         }
         return null;
@@ -49,7 +49,7 @@ public static class DataSystem
         Texture2D texture = new Texture2D(1, 1);
         texture.LoadImage(imageBytes);
         texture.filterMode = FilterMode.Point;
-        Sprite sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector3(0.5f, 0.5f));
+        Sprite sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector3(0.5f, 0.0f));
         return sprite;
     }
 

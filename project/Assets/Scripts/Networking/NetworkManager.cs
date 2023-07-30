@@ -268,6 +268,7 @@ public class NetworkManager : MonoBehaviour
     public void AddUserID(string userID)
     {
         var user = new VerifiedUser(userID);
+        user.Character = characterManager.CreateExtCharacter();
         verifiedUsers.Add(user);
     }
 
@@ -318,10 +319,14 @@ public class NetworkManager : MonoBehaviour
         UpdateConnections();
     }
 
+    void Start()
+    {
+        LoadCache();
+    }
+
     void Awake()
     {
         updateConnectionTimer = updateConnectionTime;
         apiResponseTimes = new List<double>();
-        LoadCache();
     }
 }
