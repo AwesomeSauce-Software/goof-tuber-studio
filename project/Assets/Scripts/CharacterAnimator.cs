@@ -89,6 +89,11 @@ public class CharacterAnimator : MonoBehaviour
         talkingSprites[1] = spriteManager.GetSprite("Talking.png");
     }
 
+    void SetupInitialPosition()
+    {
+        InitialPosition = transform.position;
+    }
+
     void Update()
     {
         UpdateExpression();
@@ -98,15 +103,13 @@ public class CharacterAnimator : MonoBehaviour
     void Start()
     {
         SetupSprites();
+        SetupInitialPosition();
     }
 
     void Awake()
     {
         audioManager = GetComponent<AudioCache>();
-
         characterRenderer = GetComponent<SpriteRenderer>();
-        InitialPosition = transform.position;
-
         talkingSprites = new Sprite[2];
     }
 }

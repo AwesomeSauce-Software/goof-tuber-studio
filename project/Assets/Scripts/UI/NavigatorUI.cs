@@ -7,19 +7,59 @@ public class NavigatorUI : MonoBehaviour
     [SerializeField] NavigationButtonUI buttonPrefab;
     [SerializeField] List<GameObject> UICategories;
 
+    List<NavigationButtonUI> buttons;
+
     int currentActiveMenu = -1;
+    bool menuVisible;
+
+    public void GotoNavMenu()
+    {
+        currentActiveMenu = -1;
+        for (int i = 0; i < UICategories.Count; ++i)
+        {
+            UICategories[i].SetActive(false);
+            buttons[i].gameObject.SetActive(true);
+        }
+    }
+
+    public void ShowMenu()
+    {
+        currentActiveMenu = -1;
+        foreach (var button in buttons)
+            button.gameObject.SetActive(true);
+        menuVisible = true;
+    }
+
+    public void HideMenu()
+    {
+        currentActiveMenu = -1;
+        for (int i = 0; i < UICategories.Count; ++i)
+        {
+            UICategories[i].SetActive(false);
+            buttons[i].gameObject.SetActive(false);
+        }
+        menuVisible = false;
+    }
 
     void OnNavigationButtonPressed(int buttonIndex)
     {
-        if (currentActiveMenu == -1)
-        {
-            UICategories[buttonIndex].SetActive(true);
-            currentActiveMenu = buttonIndex;
-        }
+        bool offMenu = currentActiveMenu == -1 && buttonIndex != -1;
+        bool onMenu = currentActiveMenu != -1 && buttonIndex == -1;
+
+        if (onMenu || offMenu)
+            foreach (var button in buttons)
+                button.gameObject.SetActive(onMenu);
+
+        if (currentActiveMenu != -1)
+            UICategories[currentActiveMenu].SetActive(false);
+
+        UICategories[buttonIndex].SetActive(true);
+        currentActiveMenu = buttonIndex;
     }
 
     void CreateNavigationButtons()
     {
+        buttons = new List<NavigationButtonUI>();
         for (int i = 0; i < UICategories.Count; ++i)
         {
             var newButton = Instantiate(buttonPrefab);
@@ -29,11 +69,30 @@ public class NavigatorUI : MonoBehaviour
             newButton.transform.SetParent(transform, false);
 
             UICategories[i].SetActive(false);
+            buttons.Add(newButton);
+        }
+        menuVisible = true;
+    }
+
+    void UpdateMenuVisibility()
+    {
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            if (menuVisible)
+                HideMenu();
+            else
+                ShowMenu();
         }
     }
-    
+
+    void Update()
+    {
+        UpdateMenuVisibility();
+    }
+
     void Awake()
     {
         CreateNavigationButtons();
+        HideMenu();
     }
 }
