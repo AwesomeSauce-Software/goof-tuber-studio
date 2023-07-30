@@ -11,19 +11,19 @@ public class CharacterAnimator : MonoBehaviour
         set { audioManager.MeanVolume = value; }
     }
     public string CurrentExpressionName => currentExpressionName;
-    public Image CharacterImage => characterImage;
+    public SpriteRenderer CharacterRenderer => characterRenderer;
     public Vector3 InitialPosition;
 
     [SerializeField] AudioCache audioManager;
     [SerializeField] SpriteCache spriteManager;
-    [SerializeField] Image expressionImage;
+    [SerializeField] SpriteRenderer expressionRenderer;
     [Header("Audio Settings")]
     [Range(0.0f, 0.005f)] public float CutOff;
     [SerializeField] float bobTime;
     [SerializeField] float bobSpeed;
     [SerializeField] float bobDistance;
 
-    Image characterImage;
+    SpriteRenderer characterRenderer;
 
     //int currentExpression = -1;
     string currentExpressionName;
@@ -77,17 +77,16 @@ public class CharacterAnimator : MonoBehaviour
         
         float t = Mathf.Clamp01(bobTimer / bobTime);
         var bob = Vector3.Lerp(InitialPosition, InitialPosition + (Vector3.up * bobDistance), t);
-    
-        characterImage.sprite = talkingSprites[isTalking ? 1 : 0];
-        characterImage.rectTransform.anchoredPosition = bob;
+
+        characterRenderer.sprite = talkingSprites[isTalking ? 1 : 0];
+        transform.position = bob;
     }
     
     void SetupSprites()
     {
+        expressionRenderer.enabled = false;
         talkingSprites[0] = spriteManager.GetSprite("NonTalking.png");
         talkingSprites[1] = spriteManager.GetSprite("Talking.png");
-
-        characterImage.SetNativeSize();
     }
 
     void Update()
@@ -98,7 +97,6 @@ public class CharacterAnimator : MonoBehaviour
 
     void Start()
     {
-        expressionImage.enabled = false;
         SetupSprites();
     }
 
@@ -106,8 +104,8 @@ public class CharacterAnimator : MonoBehaviour
     {
         audioManager = GetComponent<AudioCache>();
 
-        characterImage = GetComponent<Image>();
-        InitialPosition = characterImage.rectTransform.anchoredPosition;
+        characterRenderer = GetComponent<SpriteRenderer>();
+        InitialPosition = transform.position;
 
         talkingSprites = new Sprite[2];
     }
