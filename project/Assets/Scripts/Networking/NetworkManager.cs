@@ -35,6 +35,9 @@ public class NetworkManager : MonoBehaviour
     [SerializeField] string networkFolder;
     [SerializeField] string sessionFileName;
     [SerializeField] string uri;
+    [SerializeField] float updateConnectionTime;
+
+    float updateConnectionTimer;
 
     WebSocket masterSocket;
     System.DateTime apiRequestTime;
@@ -140,10 +143,15 @@ public class NetworkManager : MonoBehaviour
         {
             foreach (var verifiedUser in verifiedUsers)
             {
-                LogEx.Log(LogTopics.Networking, $"Attempting to get avatars from {verifiedUser.UserID}");
-                StartCoroutine(NetworkHelper.GetUserData(GetAvatarsCallback, verifiedUser, uri, $"get-avatars/{sessionInfo.SessionPayload.session_id}/{verifiedUser.UserID}"));
+                GetAvatar(verifiedUser);
             }
         }
+    }
+
+    public void GetAvatar(VerifiedUser user)
+    {
+        LogEx.Log(LogTopics.Networking, $"Attempting to get avatars from {user.UserID}");
+        StartCoroutine(NetworkHelper.GetUserData(GetAvatarsCallback, user, uri, $"get-avatars/{sessionInfo.SessionPayload.session_id}/{user.UserID}"));
     }
 
     public void UploadAvatars()
@@ -273,6 +281,17 @@ public class NetworkManager : MonoBehaviour
         File.WriteAllText(sessionFilePath, JsonUtility.ToJson(sessionInfo));
     }
 
+    void UpdateConnections()
+    {
+        updateConnectionTimer += Time.deltaTime;
+        if (updateConnectionTimer > updateConnectionTime)
+        {
+            updateConnectionTimer = 0.0f;
+
+            GetAvatars();
+        }
+    }
+
     void LoadCache()
     {
         networkPath = DataSystem.CreateSpace(networkFolder);
@@ -296,10 +315,12 @@ public class NetworkManager : MonoBehaviour
         if (masterSocket != null)
             masterSocket.DispatchMessageQueue();
 #endif
+        UpdateConnections();
     }
 
     void Awake()
     {
+        updateConnectionTimer = updateConnectionTime;
         apiResponseTimes = new List<double>();
         LoadCache();
     }

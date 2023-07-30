@@ -12,7 +12,7 @@ public class CharacterAnimator : MonoBehaviour
     }
     public string CurrentExpressionName => currentExpressionName;
     public SpriteRenderer CharacterRenderer => characterRenderer;
-    public Vector3 InitialPosition;
+    public Vector3 InitialPosition = Vector3.zero;
 
     [SerializeField] AudioCache audioManager;
     [SerializeField] SpriteCache spriteManager;
@@ -89,11 +89,6 @@ public class CharacterAnimator : MonoBehaviour
         talkingSprites[1] = spriteManager.GetSprite("Talking.png");
     }
 
-    void SetupInitialPosition()
-    {
-        InitialPosition = transform.position;
-    }
-
     void Update()
     {
         UpdateExpression();
@@ -103,7 +98,6 @@ public class CharacterAnimator : MonoBehaviour
     void Start()
     {
         SetupSprites();
-        SetupInitialPosition();
     }
 
     void Awake()
