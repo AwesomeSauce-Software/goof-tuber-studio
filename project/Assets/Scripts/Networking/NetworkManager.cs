@@ -176,22 +176,6 @@ public class NetworkManager : MonoBehaviour
         }
     }
 
-    public void UploadAvatarsDeprecated()
-    {
-        if (HasSession)
-        {
-            var cachedSpritePaths = spriteManager.CachedSpritePaths;
-            WWWForm uploadForm = new WWWForm();
-
-            foreach (var cachedSpritePath in cachedSpritePaths)
-            {
-                uploadForm.AddBinaryData("avatar", File.ReadAllBytes(cachedSpritePath), Path.GetFileName(cachedSpritePath));
-            }
-
-            StartCoroutine(NetworkHelper.PostRequestForm(UploadAvatarsCallback, uri, $"upload-avatar/{sessionInfo.SessionPayload.session_id}", uploadForm));
-        }
-    }
-
     public void PingAPI()
     {
         apiRequestTime = System.DateTime.Now;

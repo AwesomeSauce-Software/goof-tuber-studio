@@ -8,7 +8,8 @@ public class CharacterManager : MonoBehaviour
     public enum SortingMode
     {
         Free,
-        Line
+        LineAnchorRight,
+        LineAnchorLeft
     }
 
     [SerializeField] SpaceManager spaceManager;
@@ -53,11 +54,9 @@ public class CharacterManager : MonoBehaviour
         float spacing = 0.0f;
         for (int i = 0; i < characters.Count; ++i)
         {
+            float direction = sortingMode == SortingMode.LineAnchorRight ? spacing : 1.0f - spacing;
             var character = characters[i];
-            var sprite = character.CharacterRenderer.sprite;
-
-            var position = Vector3.Lerp(lineMaxRight, lineMaxLeft, spacing);
-            //position.y += sprite.bounds.size.y * (1.0f / sprite.pixelsPerUnit);
+            var position = Vector3.Lerp(lineMaxRight, lineMaxLeft, direction);
             position.z = i * 0.001f;
 
             character.InitialPosition = position;
@@ -69,7 +68,8 @@ public class CharacterManager : MonoBehaviour
     {
         switch (sortingMode)
         {
-            case SortingMode.Line:
+            case SortingMode.LineAnchorRight:
+            case SortingMode.LineAnchorLeft:
                 LineSorting();
                 break;
         }
