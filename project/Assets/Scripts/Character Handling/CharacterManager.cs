@@ -37,11 +37,19 @@ public class CharacterManager : MonoBehaviour
     string configFolderPath;
     string configFilePath;
 
-    public CharacterAnimator CreateExtCharacter()
+    public CharacterAnimator CreateExtCharacter(string userID)
     {
         var extCharacter = Instantiate(characterPrefab);
         extCharacter.transform.SetParent(transform);
         extCharacter.transform.localScale = Vector3.one;
+        extCharacter.UserID = userID;
+
+        int index = System.Array.FindIndex(charactersConfig.CharacterPlacements, c => c.UserID == userID);
+        if (index >= 0)
+        {
+            var placement = charactersConfig.CharacterPlacements[index];
+            extCharacter.InitialPosition = placement.Position;
+        }
 
         characters.Add(extCharacter);
         UpdateSorting();
@@ -49,9 +57,9 @@ public class CharacterManager : MonoBehaviour
         return extCharacter;
     }
 
-    public CharacterAnimator CreateExtCharacter(AvatarPayload avatarPayload)
+    public CharacterAnimator CreateExtCharacter(string userID, AvatarPayload avatarPayload)
     {
-        var extCharacter = CreateExtCharacter();
+        var extCharacter = CreateExtCharacter(userID);
         extCharacter.LoadAvatarPayload(avatarPayload);
         return extCharacter;
     }

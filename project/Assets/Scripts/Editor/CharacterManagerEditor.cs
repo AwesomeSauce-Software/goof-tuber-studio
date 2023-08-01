@@ -18,7 +18,7 @@ public class CharacterManagerEditor : Editor
 
             if (GUILayout.Button("Create Dummy Ext Character"))
             {
-                characterManager.CreateExtCharacter();
+                characterManager.CreateExtCharacter("dummy");
             }
 
             if (GUILayout.Button("Save Character Config"))

@@ -98,7 +98,7 @@ public class NetworkManager : MonoBehaviour
             }
             else
             {
-                user.Character = characterManager.CreateExtCharacter(avatarPayload);
+                user.Character = characterManager.CreateExtCharacter(user.UserID, avatarPayload);
             }
 
 #if UNITY_EDITOR
@@ -277,8 +277,7 @@ public class NetworkManager : MonoBehaviour
     public VerifiedUser AddUserID(string userID)
     {
         var user = new VerifiedUser(userID);
-        user.Character = characterManager.CreateExtCharacter();
-        user.Character.UserID = userID;
+        user.Character = characterManager.CreateExtCharacter(userID);
         verifiedUsers.Add(user);
 
         return user;
