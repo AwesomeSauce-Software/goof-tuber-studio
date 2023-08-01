@@ -22,7 +22,7 @@ public class SessionInformation
 
 public class NetworkManager : MonoBehaviour
 {
-    public bool HasSession => sessionInfo?.SessionPayload != null && sessionInfo.SessionPayload.session_id.Length > 0;
+    public bool HasSession => sessionInfo?.SessionPayload != null || sessionInfo.SessionPayload.session_id.Length > 0;
 
     [SerializeField] SpriteInternalManager spriteManager;
     [SerializeField] CharacterAnimator selfCharacter;
@@ -52,12 +52,12 @@ public class NetworkManager : MonoBehaviour
     #region Callbacks
     void InitiateSessionCallback(long result, string data)
     {
-        LogEx.Log(LogTopics.Networking, $"Verification ID result: {result} {data}");
+        LogEx.Log(LogTopics.NetworkGeneral, $"Verification ID result: {result} {data}");
     }
 
     void RquestSessionCallback(long result, VerifiedUser user)
     {
-        LogEx.Log(LogTopics.Networking, $"Request session user ID result: {result}");
+        LogEx.Log(LogTopics.NetworkGeneral, $"Request session user ID result: {result}");
         if (result == 200)
         {
             if (!sessionInfo.VerifiedUserIDs.Contains(user.UserID))
@@ -65,27 +65,29 @@ public class NetworkManager : MonoBehaviour
         }
         else
         {
+            Destroy(user.Character);
             verifiedUsers.RemoveAll(u => u.UserID == user.UserID);
         }
     }
 
     void GetSessionIDCallback(long result, string data)
     {
-        LogEx.Log(LogTopics.Networking, $"Session ID result: {result} {data}");
+        LogEx.Log(LogTopics.NetworkGeneral, $"Session ID result: {result} {data}");
         if (result == 200)
         {
             sessionInfo.SessionPayload = JsonUtility.FromJson<SessionPayload>(data);
+            SaveCache();
         }
     }
 
     void UploadAvatarsCallback(long result, string data)
     {
-        LogEx.Log(LogTopics.Networking, $"Uploading Sprites result: {result} {data}");
+        LogEx.Log(LogTopics.NetworkAvatars, $"Uploading Sprites result: {result} {data}");
     }
 
     void GetAvatarsCallback(long result, VerifiedUser user, string data)
     {
-        LogEx.Log(LogTopics.Networking, $"Get Avatars result: {result} for ID {user.UserID}");
+        LogEx.Log(LogTopics.NetworkAvatars, $"Get Avatars result: {result} for ID {user.UserID}");
         if (result == 200)
         {
             var avatarPayload = JsonUtility.FromJson<AvatarPayload>(data);
@@ -102,16 +104,32 @@ public class NetworkManager : MonoBehaviour
 #if UNITY_EDITOR
             foreach (var serializedAvatar in avatarPayload.avatars)
             {
-                LogEx.Log(LogTopics.Networking, serializedAvatar.filename);
+                LogEx.Log(LogTopics.NetworkAvatars, serializedAvatar.filename);
             }
 #endif
+        }
+    }
+
+    void ValidateSessionCallback(long result, string data)
+    {
+        LogEx.Log(LogTopics.NetworkGeneral, $"Validate Session result: {result}");
+        if (result == 200)
+        {
+            InitializeWebsocket();
+        }
+        else
+        {
+            sessionInfo.SessionPayload = null;
+            sessionInfo.VerifiedUserIDs.Clear(); 
+            RemoveVerifiedUsers();
+            SaveCache();
         }
     }
 
     void PingAPICallback(long result, string data)
     {
         var apiResponseTime = System.DateTime.Now - apiRequestTime;
-        LogEx.Log(LogTopics.NetworkingPinging, $"API Ping: {result} {apiResponseTime.TotalMilliseconds}ms");
+        LogEx.Log(LogTopics.NetworkGeneral, $"API Ping: {result} {apiResponseTime.TotalMilliseconds}ms");
         apiResponseTimes.Add(apiResponseTime.TotalMilliseconds);
     }
     #endregion
@@ -126,8 +144,7 @@ public class NetworkManager : MonoBehaviour
     {
         if (HasSession)
         {
-            var newUser = new VerifiedUser(friendIDInputField.text);
-            verifiedUsers.Add(newUser);
+            var newUser = AddUserID(friendIDInputField.text);
             StartCoroutine(NetworkHelper.SessionRequest(RquestSessionCallback, newUser, uri, $"request-session/{sessionInfo.SessionPayload.session_id}/{friendIDInputField.text}"));
         }
     }
@@ -150,7 +167,7 @@ public class NetworkManager : MonoBehaviour
 
     public void GetAvatar(VerifiedUser user)
     {
-        LogEx.Log(LogTopics.Networking, $"Attempting to get avatars from {user.UserID}");
+        LogEx.Log(LogTopics.NetworkAvatars, $"Attempting to get avatars from {user.UserID}");
         StartCoroutine(NetworkHelper.GetUserData(GetAvatarsCallback, user, uri, $"get-avatars/{sessionInfo.SessionPayload.session_id}/{user.UserID}"));
     }
 
@@ -176,6 +193,14 @@ public class NetworkManager : MonoBehaviour
         }
     }
 
+    public void ValidateSession()
+    {
+        if (HasSession)
+        {
+            StartCoroutine(NetworkHelper.GetRequest(ValidateSessionCallback, uri, $"validsession/{sessionInfo.SessionPayload.session_id}"));
+        }
+    }
+
     public void PingAPI()
     {
         apiRequestTime = System.DateTime.Now;
@@ -190,17 +215,17 @@ public class NetworkManager : MonoBehaviour
         foreach (var verifiedUser in verifiedUsers)
             userIDs.Add(verifiedUser.UserID);
         string url = "ws://" + uri + "/websocket/" + sessionInfo.SessionPayload.session_id + '/' + string.Join(",", userIDs);
-        LogEx.Log(LogTopics.NetworkingWebsockets, $"Initializing Websocket: {url}");
+        LogEx.Log(LogTopics.NetworkWebsocketGeneral, $"Initializing Websocket: {url}");
 
         masterSocket = new WebSocket(url);
 
         masterSocket.OnOpen += () =>
         {
-            LogEx.Log(LogTopics.NetworkingWebsockets, "Websocket Opened");
+            LogEx.Log(LogTopics.NetworkWebsocketGeneral, "Websocket Opened");
         };
         masterSocket.OnError += (err) =>
         {
-            LogEx.Error(LogTopics.NetworkingWebsockets, $"Websocket Error: {err}");
+            LogEx.Error(LogTopics.NetworkWebsocketGeneral, $"Websocket Error: {err}");
         };
         masterSocket.OnMessage += ReceiveWebsocketData;
 
@@ -212,7 +237,7 @@ public class NetworkManager : MonoBehaviour
     void ReceiveWebsocketData(byte[] data)
     {
         string serializedData = System.Text.Encoding.UTF8.GetString(data);
-        LogEx.Log(LogTopics.NetworkingWebsockets, $"Received Websocket Data: {serializedData}");
+        LogEx.Log(LogTopics.NetworkWebsocketReceiving, $"Received Websocket Data: {serializedData}");
 
         // json utility is ass (AwesomeSauce Software) :)
         if (serializedData.Length > 1 && serializedData.StartsWith("{"))
@@ -220,7 +245,7 @@ public class NetworkManager : MonoBehaviour
             var activityPayload = JsonUtility.FromJson<ReceiveActivitiyPayload>(serializedData);
             if (activityPayload.data.Length > 0)
             {
-                LogEx.Log(LogTopics.NetworkingActivity, $"Activity Payload: {activityPayload.data[0].userid} {activityPayload.data[0].activity.voice_activity} {activityPayload.data[0].activity.action}");
+                LogEx.Log(LogTopics.NetworkWebsocketReceiving, $"Activity Payload: {activityPayload.data[0].userid} {activityPayload.data[0].activity.voice_activity} {activityPayload.data[0].activity.action}");
 
                 var verifiedUser = verifiedUsers.Find(u => u.UserID == activityPayload.data[0].userid);
                 if (verifiedUser != null && verifiedUser.Character != null)
@@ -238,7 +263,7 @@ public class NetworkManager : MonoBehaviour
             var activityPayload = new ActivityPayload();
             activityPayload.voice_activity = selfCharacter.MeanVolume;
             activityPayload.action = selfCharacter.CurrentExpressionName;
-            LogEx.Log(LogTopics.NetworkingWebsocketsSending, $"Sending Websocket Data: {activityPayload.voice_activity}");
+            LogEx.Log(LogTopics.NetworkWebsocketSending, $"Sending Websocket Data: {activityPayload.voice_activity}");
 
             await masterSocket.SendText("SEND " + JsonUtility.ToJson(activityPayload));
         }
@@ -249,11 +274,13 @@ public class NetworkManager : MonoBehaviour
     }
     #endregion
 
-    public void AddUserID(string userID)
+    public VerifiedUser AddUserID(string userID)
     {
         var user = new VerifiedUser(userID);
         user.Character = characterManager.CreateExtCharacter();
         verifiedUsers.Add(user);
+
+        return user;
     }
 
     public void SaveCache()
@@ -264,6 +291,16 @@ public class NetworkManager : MonoBehaviour
         sessionInfo.VerifiedUserIDs = userIDs;
 
         File.WriteAllText(sessionFilePath, JsonUtility.ToJson(sessionInfo));
+    }
+
+    void RemoveVerifiedUsers()
+    {
+        foreach (var verifiedUser in verifiedUsers)
+        {
+            if (verifiedUser.Character != null)
+                Destroy(verifiedUser.Character);
+        }
+        verifiedUsers.Clear();
     }
 
     void UpdateConnections()
@@ -289,8 +326,13 @@ public class NetworkManager : MonoBehaviour
             var serializedSessionPayload = File.ReadAllText(sessionFilePath);
             sessionInfo = JsonUtility.FromJson<SessionInformation>(serializedSessionPayload);
 
-            foreach (var verifiedUserID in sessionInfo.VerifiedUserIDs)
-                AddUserID(verifiedUserID);
+            if (HasSession)
+            {
+                foreach (var verifiedUserID in sessionInfo.VerifiedUserIDs)
+                    AddUserID(verifiedUserID);
+
+                ValidateSession();
+            }
         }
     }
 

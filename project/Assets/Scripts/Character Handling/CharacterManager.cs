@@ -46,6 +46,20 @@ public class CharacterManager : MonoBehaviour
         return extCharacter;
     }
 
+    public void UpdateLineLeft(float value)
+    {
+        lineLeft = value;
+        UpdateLineLimits();
+        UpdateSorting();
+    }
+
+    public void UpdateLineRight(float value)
+    {
+        lineRight = value;
+        UpdateLineLimits();
+        UpdateSorting();
+    }
+
     void LineSorting()
     {
         if (characters.Count <= 0)
@@ -115,15 +129,15 @@ public class CharacterManager : MonoBehaviour
     void OnDrawGizmos()
     {
         Gizmos.color = Color.red;
-        Gizmos.DrawSphere(lineMaxLeft, 0.005f);
-        Gizmos.DrawSphere(lineMaxRight, 0.005f);
+        Gizmos.DrawSphere(lineMaxLeft, 0.085f);
+        Gizmos.DrawSphere(lineMaxRight, 0.085f);
 
         Gizmos.color = Color.yellow;
         float j = 0.0f;
         for (int i = 0; j < 1.0f && i < loopMax; ++i)
         {
             j += lineIncrement;
-            Gizmos.DrawSphere(Vector3.Lerp(lineMaxLeft, lineMaxRight, j) + Vector3.up * 0.001f, 0.0005f);
+            Gizmos.DrawSphere(Vector3.Lerp(lineMaxLeft, lineMaxRight, j) + Vector3.up * 0.001f, 0.05f);
         }
     }
 
