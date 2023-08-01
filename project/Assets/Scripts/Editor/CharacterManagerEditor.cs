@@ -7,6 +7,8 @@ using UnityEditor;
 [CustomEditor(typeof(CharacterManager))]
 public class CharacterManagerEditor : Editor
 {
+    int dummyCharacterCount = 0;
+
     public override void OnInspectorGUI()
     {
         DrawDefaultInspector();
@@ -18,7 +20,7 @@ public class CharacterManagerEditor : Editor
 
             if (GUILayout.Button("Create Dummy Ext Character"))
             {
-                characterManager.CreateExtCharacter("dummy");
+                characterManager.CreateExtCharacter($"dummy-{dummyCharacterCount++}");
             }
 
             if (GUILayout.Button("Save Character Config"))
