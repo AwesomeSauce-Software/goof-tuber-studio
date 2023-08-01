@@ -5,17 +5,20 @@ using UnityEngine;
 
 public class CharacterManager : MonoBehaviour
 {
-    public enum SortingMode
+    public enum eSortingMode
     {
         Free,
+        FreeLine,
         LineAnchorRight,
         LineAnchorLeft
     }
 
+    public eSortingMode SortingMode => sortingMode;
+
     [SerializeField] SpaceManager spaceManager;
     [SerializeField] CharacterAnimator characterPrefab;
     [Header("Sorting Modes")]
-    [SerializeField] SortingMode sortingMode;
+    [SerializeField] eSortingMode sortingMode;
     [SerializeField] [Range(0.0f, 1.0f)] float lineLeft;
     [SerializeField] [Range(0.0f, 1.0f)] float lineRight;
     [SerializeField] [Min(1)] int charactersVisible;
@@ -60,7 +63,21 @@ public class CharacterManager : MonoBehaviour
         UpdateSorting();
     }
 
-    void LineSorting()
+    public void UpdateSorting()
+    {
+        switch (sortingMode)
+        {
+            case eSortingMode.FreeLine:
+                FreeLineSorting();
+                break;
+            case eSortingMode.LineAnchorRight:
+            case eSortingMode.LineAnchorLeft:
+                LineSorting();
+                break;
+        }
+    }
+
+    void LineSorting(bool overrideSort = false)
     {
         if (characters.Count <= 0)
             return;
@@ -68,7 +85,7 @@ public class CharacterManager : MonoBehaviour
         float spacing = 0.0f;
         for (int i = 0; i < characters.Count; ++i)
         {
-            float direction = sortingMode == SortingMode.LineAnchorRight ? spacing : 1.0f - spacing;
+            float direction = sortingMode == eSortingMode.LineAnchorRight || overrideSort ? spacing : 1.0f - spacing;
             var character = characters[i];
             var position = Vector3.Lerp(lineMaxRight, lineMaxLeft, direction);
             position.z = i * 0.001f;
@@ -78,14 +95,11 @@ public class CharacterManager : MonoBehaviour
         }
     }
 
-    void UpdateSorting()
+    void FreeLineSorting()
     {
-        switch (sortingMode)
+        foreach (var character in characters)
         {
-            case SortingMode.LineAnchorRight:
-            case SortingMode.LineAnchorLeft:
-                LineSorting();
-                break;
+            character.InitialPosition.y = spaceManager.RightMostPoint.y;
         }
     }
 
@@ -107,6 +121,11 @@ public class CharacterManager : MonoBehaviour
             if (potentialCharacter != null)
                 characters.Add(potentialCharacter);
         }
+        UpdateSorting();
+    }
+
+    private void Start()
+    {
         UpdateSorting();
     }
 

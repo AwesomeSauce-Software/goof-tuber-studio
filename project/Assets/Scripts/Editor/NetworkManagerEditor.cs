@@ -26,7 +26,7 @@ public class NetworkManagerEditor : Editor
             if (GUILayout.Button("Ping API"))
                 networkObject.PingAPI();
 
-            EditorGUI.BeginDisabledGroup(!networkObject.HasSession);
+            EditorGUI.BeginDisabledGroup(!Application.isPlaying || !networkObject.HasSession);
             if (GUILayout.Button("Initialize Websocket"))
                 networkObject.InitializeWebsocket();
 
