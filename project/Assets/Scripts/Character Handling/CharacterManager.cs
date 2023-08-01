@@ -1,6 +1,7 @@
-
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using UnityEngine;
 
 public class CharacterManager : MonoBehaviour
@@ -22,13 +23,19 @@ public class CharacterManager : MonoBehaviour
     [SerializeField] [Range(0.0f, 1.0f)] float lineLeft;
     [SerializeField] [Range(0.0f, 1.0f)] float lineRight;
     [SerializeField] [Min(1)] int charactersVisible;
+    [Header("Config Cache")]
+    [SerializeField] string configFolder;
+    [SerializeField] string configFileName;
 
     float lineIncrement;
-
     Vector3 lineMaxLeft;
     Vector3 lineMaxRight;
 
     List<CharacterAnimator> characters;
+
+    CharactersConfig charactersConfig;
+    string configFolderPath;
+    string configFilePath;
 
     public CharacterAnimator CreateExtCharacter()
     {
@@ -77,6 +84,29 @@ public class CharacterManager : MonoBehaviour
         }
     }
 
+    public void SaveConfigCache()
+    {
+        charactersConfig.SortingMode = sortingMode;
+        charactersConfig.CharactersVisible = charactersVisible;
+        charactersConfig.LineSortLeft = lineLeft;
+        charactersConfig.LineSortRight = lineRight;
+
+        var characterPlacements = charactersConfig.CharacterPlacements.ToList();
+        foreach (var character in characters)
+        {
+            int index = characterPlacements.FindIndex(c => c.UserID == character.UserID);
+            var placement = new CharacterPlacement(character.UserID, character.InitialPosition);
+
+            if (index >= 0)
+                characterPlacements[index] = placement;
+            else
+                characterPlacements.Add(placement);
+        }
+        charactersConfig.CharacterPlacements = characterPlacements.ToArray();
+
+        File.WriteAllText(configFilePath, JsonUtility.ToJson(charactersConfig));
+    }
+
     void LineSorting(bool overrideSort = false)
     {
         if (characters.Count <= 0)
@@ -105,9 +135,9 @@ public class CharacterManager : MonoBehaviour
 
     void UpdateLineLimits()
     {
-        lineMaxLeft = Vector3.Lerp(spaceManager.LeftMostPoint, spaceManager.RightMostPoint, lineLeft);
+        lineMaxLeft = Vector3.Lerp(spaceManager.LeftMostPoint, spaceManager.RightMostPoint, Mathf.Clamp01(lineLeft));
         lineMaxLeft.z = 0.0f;
-        lineMaxRight = Vector3.Lerp(spaceManager.RightMostPoint, spaceManager.LeftMostPoint, lineRight);
+        lineMaxRight = Vector3.Lerp(spaceManager.RightMostPoint, spaceManager.LeftMostPoint, Mathf.Clamp01(lineRight));
         lineMaxRight.z = 0.0f;
         lineIncrement = 1.0f / charactersVisible;
     }
@@ -124,6 +154,41 @@ public class CharacterManager : MonoBehaviour
         UpdateSorting();
     }
 
+    void LoadConfigCache()
+    {
+        configFolderPath = DataSystem.CreateSpace(configFolder);
+        configFilePath = configFolderPath + configFileName;
+
+        if (File.Exists(configFilePath))
+        {
+            var serializedCache = File.ReadAllText(configFilePath);
+            charactersConfig = JsonUtility.FromJson<CharactersConfig>(serializedCache);
+
+            if (charactersConfig != null)
+            {
+                sortingMode = charactersConfig.SortingMode;
+                charactersVisible = charactersConfig.CharactersVisible > 0 ? charactersConfig.CharactersVisible : 1;
+                lineLeft = charactersConfig.LineSortLeft;
+                lineRight = charactersConfig.LineSortRight;
+
+                foreach (var characterConfig in charactersConfig.CharacterPlacements)
+                {
+                    int index = characters.FindIndex(c => c.UserID == characterConfig.UserID);
+                    if (index >= 0)
+                    {
+                        characters[index].InitialPosition = characterConfig.Position;
+                    }
+                }
+            }
+        }
+        else
+        {
+            charactersConfig = new CharactersConfig();
+            charactersConfig.CharacterPlacements = new CharacterPlacement[1];
+            charactersConfig.CharacterPlacements[0] = new CharacterPlacement("user", Vector3.zero);
+        }
+    }
+
     private void Start()
     {
         UpdateSorting();
@@ -132,6 +197,7 @@ public class CharacterManager : MonoBehaviour
     void Awake()
     {
         AddExistingCharacters();
+        LoadConfigCache();
         UpdateLineLimits();
     }
 

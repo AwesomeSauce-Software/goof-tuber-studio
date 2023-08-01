@@ -49,6 +49,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   InitialPosition: {x: 0, y: 0, z: 0}
+  UserID: user
   audioManager: {fileID: 5908138055753267092}
   spriteManager: {fileID: 2381464011543029524}
   expressionRenderer: {fileID: 6308390699002982743}

@@ -2701,9 +2701,11 @@ MonoBehaviour:
   spaceManager: {fileID: 116473447}
   characterPrefab: {fileID: 2557452506126887816, guid: aa57a8693201c4946b20455f5686c3f3, type: 3}
   sortingMode: 1
-  lineLeft: 0
+  lineLeft: 0.1
   lineRight: 0.1
   charactersVisible: 8
+  configFolder: config
+  configFileName: characters.json
 --- !u!4 &1412909703
 Transform:
   m_ObjectHideFlags: 0

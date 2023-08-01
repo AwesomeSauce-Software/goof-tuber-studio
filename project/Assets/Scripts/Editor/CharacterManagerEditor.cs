@@ -21,6 +21,11 @@ public class CharacterManagerEditor : Editor
                 characterManager.CreateExtCharacter();
             }
 
+            if (GUILayout.Button("Save Character Config"))
+            {
+                characterManager.SaveConfigCache();
+            }
+
             EditorGUI.EndDisabledGroup();
         }
     }

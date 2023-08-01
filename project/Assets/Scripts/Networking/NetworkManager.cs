@@ -278,6 +278,7 @@ public class NetworkManager : MonoBehaviour
     {
         var user = new VerifiedUser(userID);
         user.Character = characterManager.CreateExtCharacter();
+        user.Character.UserID = userID;
         verifiedUsers.Add(user);
 
         return user;

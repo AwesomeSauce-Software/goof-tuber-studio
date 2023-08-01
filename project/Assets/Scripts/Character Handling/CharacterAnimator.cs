@@ -13,7 +13,9 @@ public class CharacterAnimator : MonoBehaviour
     public string CurrentExpressionName => currentExpressionName;
     public SpriteRenderer CharacterRenderer => characterRenderer;
     public Vector3 InitialPosition = Vector3.zero;
+    public string UserID;
 
+    [Space()]
     [SerializeField] AudioCache audioManager;
     [SerializeField] SpriteCache spriteManager;
     [SerializeField] SpriteRenderer expressionRenderer;
