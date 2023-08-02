@@ -68,7 +68,7 @@ public class CharacterFocus : MonoBehaviour
 
     }
     
-    void SetUIObjectsActive(bool value)
+    public void SetUIObjectsActive(bool value)
     {
         bool sortingModeFree = characterManager.SortingMode == CharacterManager.eSortingMode.Free || characterManager.SortingMode == CharacterManager.eSortingMode.FreeLine;
 

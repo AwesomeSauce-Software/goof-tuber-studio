@@ -78,6 +78,12 @@ public class CharacterManager : MonoBehaviour
         UpdateSorting();
     }
 
+    public void SetSortingMode(eSortingMode newSortingMode)
+    {
+        sortingMode = newSortingMode;
+        UpdateSorting();
+    }
+
     public void UpdateSorting()
     {
         switch (sortingMode)
