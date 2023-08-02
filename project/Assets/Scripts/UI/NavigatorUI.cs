@@ -1,9 +1,11 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class NavigatorUI : MonoBehaviour
 {
+    [SerializeField] Image backgroundImage;
     [SerializeField] NavigationButtonUI buttonPrefab;
     [SerializeField] List<GameObject> UICategories;
 
@@ -28,6 +30,7 @@ public class NavigatorUI : MonoBehaviour
         foreach (var button in buttons)
             button.gameObject.SetActive(true);
         menuVisible = true;
+        backgroundImage.enabled = true;
     }
 
     public void HideMenu()
@@ -39,6 +42,7 @@ public class NavigatorUI : MonoBehaviour
             buttons[i].gameObject.SetActive(false);
         }
         menuVisible = false;
+        backgroundImage.enabled = false;
     }
 
     void OnNavigationButtonPressed(int buttonIndex)
