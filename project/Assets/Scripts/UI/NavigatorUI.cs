@@ -83,7 +83,15 @@ public class NavigatorUI : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             if (menuVisible)
-                HideMenu();
+            {
+                if (currentActiveMenu != -1)
+                {
+                    HideMenu();
+                    ShowMenu();
+                }
+                else
+                    HideMenu();
+            }
             else
                 ShowMenu();
         }

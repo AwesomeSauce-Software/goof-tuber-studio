@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class CharacterManager : MonoBehaviour
 {
@@ -16,6 +17,9 @@ public class CharacterManager : MonoBehaviour
 
     public eSortingMode SortingMode => sortingMode;
 
+    [SerializeField] Slider sliderLineLeft;
+    [SerializeField] Slider sliderLineRight;
+    [SerializeField] Slider sliderCharactersVisible;
     [SerializeField] SpaceManager spaceManager;
     [SerializeField] CharacterAnimator characterPrefab;
     [Header("Sorting Modes")]
@@ -74,6 +78,13 @@ public class CharacterManager : MonoBehaviour
     public void UpdateLineRight(float value)
     {
         lineRight = value;
+        UpdateLineLimits();
+        UpdateSorting();
+    }
+
+    public void UpdateCharactersVisible(float value)
+    {
+        charactersVisible = Mathf.CeilToInt(value);
         UpdateLineLimits();
         UpdateSorting();
     }
@@ -168,6 +179,13 @@ public class CharacterManager : MonoBehaviour
         UpdateSorting();
     }
 
+    void SetUIElements()
+    {
+        sliderLineLeft.value = lineLeft;
+        sliderLineRight.value = lineRight;
+        sliderCharactersVisible.value = charactersVisible;
+    }
+
     void LoadConfigCache()
     {
         configFolderPath = DataSystem.CreateSpace(configFolder);
@@ -205,6 +223,7 @@ public class CharacterManager : MonoBehaviour
 
     private void Start()
     {
+        SetUIElements();
         UpdateSorting();
     }
 
