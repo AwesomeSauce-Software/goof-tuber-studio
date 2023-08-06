@@ -12,12 +12,16 @@ public class SliderTextValueUI : MonoBehaviour
 
     public void OnValueChange(float value)
     {
-        float roundedValue = Mathf.Round(value * rounding) / rounding;
-        textElement.text = $"{roundedValue}{(showMaxValue ? $"/{slider.maxValue}" : "")}";
+        if (textElement != null)
+        {
+            float roundedValue = Mathf.Round(value * rounding) / rounding;
+            textElement.text = $"{roundedValue}{(showMaxValue ? $"/{slider.maxValue}" : "")}";
+        }
     }
 
     void Awake()
     {
         textElement = GetComponent<Text>();
+        OnValueChange(slider.value);
     }
 }

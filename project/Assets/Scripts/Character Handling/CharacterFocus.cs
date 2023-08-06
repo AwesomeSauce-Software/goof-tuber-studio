@@ -17,62 +17,101 @@ public class CharacterFocus : MonoBehaviour
 
     CharacterManager characterManager;
 
-    float spriteHeight;
-    float spritePPU;
-
     bool focusEnabled = true;
+    bool movingMover = false;
 
     public void SetTargetCharacter(CharacterAnimator newCharacter)
     {
         targetCharacter = newCharacter;
-        var sprite = targetCharacter.CharacterRenderer.sprite;
-
-        spriteHeight = sprite.rect.height;
-        spritePPU = 1.0f / targetCharacter.CharacterRenderer.sprite.pixelsPerUnit;
     }
 
-    Rect GetWorldSpriteRect(SpriteRenderer spriteRenderer, float offsetY = 0.0f)
+    public void SetUIObjectsActive(bool value)
     {
-        float PPU = (1.0f / spriteRenderer.sprite.pixelsPerUnit);
-        var spriteSize = spriteRenderer.sprite.rect.size * PPU;
-        var targetOffset = targetCharacter.InitialPosition;
-        targetOffset.x -= spriteSize.x * 0.5f;
-        targetOffset.y -= spriteSize.y * 0.5f;
-        targetOffset.y += offsetY;
+        bool sortingModeFree = characterManager.SortingMode == CharacterManager.eSortingMode.Free || characterManager.SortingMode == CharacterManager.eSortingMode.FreeLine;
 
-        var spriteRect = new Rect(targetOffset, spriteSize);
-        return spriteRect;
+        moverObject.gameObject.SetActive(value && sortingModeFree);
+    }
+
+    bool IsPointInSpriteBounds(SpriteRenderer spriteRenderer, Vector3 point, float boundsMultiplier = 1.0f)
+    {
+        return IsPointInSpriteBounds(spriteRenderer, point, Vector3.zero, boundsMultiplier);
+    }
+
+    bool IsPointInSpriteBounds(SpriteRenderer spriteRenderer, Vector3 point, Vector3 offset, float boundsMultiplier = 1.0f)
+    {
+        var spritePosition = spriteRenderer.gameObject.transform.position + offset;
+        var sprite = spriteRenderer.sprite;
+        var spritePPU = 1.0f / sprite.pixelsPerUnit;
+        var spriteSize = sprite.rect.size * spriteRenderer.transform.localScale * spritePPU * 0.5f * boundsMultiplier;
+
+        var left = spritePosition.x - spriteSize.x;
+        var right = spritePosition.x + spriteSize.x;
+        var down = spritePosition.y - spriteSize.y;
+        var up = spritePosition.y + spriteSize.y;
+
+        return (point.x > left && point.x < right && point.y > down && point.y < up);
+    }
+
+    Vector3 GetWorldPointer()
+    {
+        var worldPointer = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+        worldPointer.z = 0.0f;
+
+        return worldPointer;
     }
 
     void UpdateMover()
     {
         moverObject.sprite = characterManager.SortingMode == CharacterManager.eSortingMode.Free ? moverFullSprite : moverLineSprite;
 
+        bool moverActive = moverObject.gameObject.activeSelf;
+
         var moverPosition = targetCharacter.InitialPosition;
         moverPosition.y += moverOffsetY;
         moverPosition.z = -0.5f;
         moverObject.transform.position = moverPosition;
 
-        var worldPointer = mainCamera.ScreenToWorldPoint(Input.mousePosition);
-        worldPointer.z = 0.0f;
+        var worldPointer = GetWorldPointer();
 
-        Rect moverRect = GetWorldSpriteRect(moverObject, moverOffsetY);
-        if (moverObject.gameObject.activeSelf && moverRect.Contains(worldPointer))
+        if (moverActive && !movingMover && Input.GetMouseButton(0))
         {
-            if (Input.GetMouseButton(0))
-            {
-                targetCharacter.InitialPosition = worldPointer;
-                characterManager.UpdateSorting();
-            }
+            movingMover = IsPointInSpriteBounds(moverObject, worldPointer);
+        }
+        else if (!moverActive || Input.GetMouseButtonUp(0))
+        {
+            movingMover = false;
+        }
+
+        if (movingMover)
+        {
+            targetCharacter.InitialPosition = worldPointer - Vector3.up * moverOffsetY;
+            characterManager.UpdateSorting();
         }
 
     }
-    
-    public void SetUIObjectsActive(bool value)
-    {
-        bool sortingModeFree = characterManager.SortingMode == CharacterManager.eSortingMode.Free || characterManager.SortingMode == CharacterManager.eSortingMode.FreeLine;
 
-        moverObject.gameObject.SetActive(value && sortingModeFree);
+    void UpdateTargetCharacter()
+    {
+        if (Input.GetMouseButtonDown(1))
+        {
+            var characterList = characterManager.Characters;
+            var worldPointer = GetWorldPointer();
+
+            characterList.Sort((a, b) => a.transform.position.z > b.transform.position.z ? 1 : -1);
+
+            foreach (var character in characterList)
+            {
+                var sprite = character.CharacterRenderer.sprite;
+                var spritePPU = 1.0f / sprite.pixelsPerUnit;
+                var halfHeight = Vector3.up * sprite.rect.height * spritePPU * 0.5f;
+
+                if (IsPointInSpriteBounds(character.CharacterRenderer, worldPointer, halfHeight))
+                {
+                    SetTargetCharacter(character);
+                    break;
+                }
+            }
+        }
     }
 
     void UpdateControls()
@@ -85,6 +124,7 @@ public class CharacterFocus : MonoBehaviour
 
         if (focusEnabled)
         {
+            UpdateTargetCharacter();
             UpdateMover();
         }
     }

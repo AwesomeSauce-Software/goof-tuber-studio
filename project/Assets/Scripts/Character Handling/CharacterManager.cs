@@ -17,6 +17,15 @@ public class CharacterManager : MonoBehaviour
 
     public eSortingMode SortingMode => sortingMode;
 
+    public List<CharacterAnimator> Characters
+    {
+        get
+        {
+            ValidateCharacterList();
+            return characters;
+        }
+    }
+
     [SerializeField] Slider sliderLineLeft;
     [SerializeField] Slider sliderLineRight;
     [SerializeField] Slider sliderCharactersVisible;
@@ -111,6 +120,8 @@ public class CharacterManager : MonoBehaviour
 
     public void SaveConfigCache()
     {
+        ValidateCharacterList();
+
         charactersConfig.SortingMode = sortingMode;
         charactersConfig.CharactersVisible = charactersVisible;
         charactersConfig.LineSortLeft = lineLeft;
@@ -132,10 +143,17 @@ public class CharacterManager : MonoBehaviour
         File.WriteAllText(configFilePath, JsonUtility.ToJson(charactersConfig));
     }
 
+    void ValidateCharacterList()
+    {
+        characters.RemoveAll(c => c == null);
+    }
+
     void LineSorting(bool overrideSort = false)
     {
         if (characters.Count <= 0)
             return;
+
+        ValidateCharacterList();
 
         float spacing = 0.0f;
         for (int i = 0; i < characters.Count; ++i)
