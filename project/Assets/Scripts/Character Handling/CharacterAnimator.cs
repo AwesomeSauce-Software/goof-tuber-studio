@@ -26,12 +26,18 @@ public class CharacterAnimator : MonoBehaviour
     [SerializeField] float bobDistance;
 
     SpriteRenderer characterRenderer;
+    Vector3 referenceSpriteSize;
 
-    //int currentExpression = -1;
     string currentExpressionName;
     Sprite[] talkingSprites;
 
     float bobTimer;
+
+    public void SetSpriteSize(float width, float height)
+    {
+        if (referenceSpriteSize.x > 0.0f && referenceSpriteSize.y > 0.0f)
+            transform.localScale = new Vector3(width / referenceSpriteSize.x, height / referenceSpriteSize.y);
+    }
 
     public void LoadAvatarPayload(AvatarPayload avatarPayload)
     {
@@ -41,25 +47,12 @@ public class CharacterAnimator : MonoBehaviour
 
     void UpdateExpression()
     {
-        if (Input.GetKeyDown(KeyCode.Keypad0))
-        {
-            //currentExpression++;
-            //if (currentExpression >= spriteManager.ExpressionCount)
-            //    currentExpression = -1;
-            //
-            //if (currentExpression > -1)
-            //{
-            //    expressionImage.enabled = true;
-            //    expressionImage.sprite = spriteManager.GetSprite(spriteManager.ExpressionIndex + currentExpression);
-            //    currentExpressionName = expressionImage.sprite.name;
-            //    expressionImage.SetNativeSize();
-            //}
-            //else
-            //{
-            //    currentExpressionName = "";
-            //    expressionImage.enabled = false;
-            //}
-        }
+        //if (Input.GetKeyDown(KeyCode.Keypad0))
+        //{
+        //   
+        //}
+        // to-do:
+        //  replace with a keybind implementation
     }
     
     void AnimateCharacter()
@@ -89,6 +82,8 @@ public class CharacterAnimator : MonoBehaviour
         expressionRenderer.enabled = false;
         talkingSprites[0] = spriteManager.GetSprite("NonTalking.png");
         talkingSprites[1] = spriteManager.GetSprite("Talking.png");
+
+        referenceSpriteSize = talkingSprites[0].rect.size;
     }
 
     void Update()

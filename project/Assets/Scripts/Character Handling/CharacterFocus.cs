@@ -1,10 +1,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class CharacterFocus : MonoBehaviour
 {
     [SerializeField] GameObject editCharacterUI;
+    [SerializeField] Image characterImage;
     [SerializeField] SpaceManager spaceManager;
     [SerializeField] Camera mainCamera;
     [Space()]
@@ -14,6 +16,9 @@ public class CharacterFocus : MonoBehaviour
     [SerializeField] Sprite moverFullSprite;
     [SerializeField] Sprite moverLineSprite;
     [SerializeField] float moverOffsetY;
+    [Header("Scaler Element")]
+    [SerializeField] InputField widthInput;
+    [SerializeField] InputField heightInput;
 
     CharacterManager characterManager;
 
@@ -23,6 +28,18 @@ public class CharacterFocus : MonoBehaviour
     public void SetTargetCharacter(CharacterAnimator newCharacter)
     {
         targetCharacter = newCharacter;
+
+        UpdateCharacterImage();
+    }
+
+    public void SetCharacterSpriteSize()
+    {
+        float width, height;
+        float.TryParse(widthInput.text, out width);
+        float.TryParse(heightInput.text, out height);
+
+        if (width > 0.0f && height > 0.0f)
+            targetCharacter.SetSpriteSize(width, height);
     }
 
     public void SetUIObjectsActive(bool value)
@@ -30,6 +47,16 @@ public class CharacterFocus : MonoBehaviour
         bool sortingModeFree = characterManager.SortingMode == CharacterManager.eSortingMode.Free || characterManager.SortingMode == CharacterManager.eSortingMode.FreeLine;
 
         moverObject.gameObject.SetActive(value && sortingModeFree);
+
+        if (value)
+        {
+            UpdateCharacterImage();
+        }
+    }
+
+    void UpdateCharacterImage()
+    {
+        characterImage.sprite = targetCharacter.CharacterRenderer.sprite;
     }
 
     bool IsPointInSpriteBounds(SpriteRenderer spriteRenderer, Vector3 point, float boundsMultiplier = 1.0f)
@@ -103,7 +130,7 @@ public class CharacterFocus : MonoBehaviour
             {
                 var sprite = character.CharacterRenderer.sprite;
                 var spritePPU = 1.0f / sprite.pixelsPerUnit;
-                var halfHeight = Vector3.up * sprite.rect.height * spritePPU * 0.5f;
+                var halfHeight = Vector3.up * sprite.rect.height * character.transform.localScale.y * spritePPU * 0.5f;
 
                 if (IsPointInSpriteBounds(character.CharacterRenderer, worldPointer, halfHeight))
                 {

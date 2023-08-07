@@ -62,6 +62,7 @@ public class CharacterManager : MonoBehaviour
         {
             var placement = charactersConfig.CharacterPlacements[index];
             extCharacter.InitialPosition = placement.Position;
+            extCharacter.transform.localScale = placement.Scale;
         }
 
         characters.Add(extCharacter);
@@ -131,7 +132,7 @@ public class CharacterManager : MonoBehaviour
         foreach (var character in characters)
         {
             int index = characterPlacements.FindIndex(c => c.UserID == character.UserID);
-            var placement = new CharacterPlacement(character.UserID, character.InitialPosition);
+            var placement = new CharacterPlacement(character.UserID, character.InitialPosition, character.transform.localScale);
 
             if (index >= 0)
                 characterPlacements[index] = placement;
@@ -227,6 +228,7 @@ public class CharacterManager : MonoBehaviour
                     if (index >= 0)
                     {
                         characters[index].InitialPosition = characterConfig.Position;
+                        characters[index].transform.localScale = characterConfig.Scale;
                     }
                 }
             }
@@ -235,7 +237,7 @@ public class CharacterManager : MonoBehaviour
         {
             charactersConfig = new CharactersConfig();
             charactersConfig.CharacterPlacements = new CharacterPlacement[1];
-            charactersConfig.CharacterPlacements[0] = new CharacterPlacement("user", Vector3.zero);
+            charactersConfig.CharacterPlacements[0] = new CharacterPlacement("user", Vector3.zero, Vector3.one);
         }
     }
 

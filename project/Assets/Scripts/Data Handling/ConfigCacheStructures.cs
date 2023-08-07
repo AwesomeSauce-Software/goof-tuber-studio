@@ -4,12 +4,14 @@ using UnityEngine;
 public class CharacterPlacement
 {
     public string UserID;
-    public Vector3 Position; 
+    public Vector3 Position;
+    public Vector3 Scale;
 
-    public CharacterPlacement(string userID, Vector3 position)
+    public CharacterPlacement(string userID, Vector3 position, Vector3 scale)
     {
         UserID = userID;
         Position = position;
+        Scale = scale;
     }
 }
 
