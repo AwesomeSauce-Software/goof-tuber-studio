@@ -4,12 +4,16 @@ using UnityEngine;
 public class CharacterPlacement
 {
     public string UserID;
+    public int Order;
+    public float BobAmount;
     public Vector3 Position;
     public Vector3 Scale;
 
-    public CharacterPlacement(string userID, Vector3 position, Vector3 scale)
+    public CharacterPlacement(string userID, Vector3 position, Vector3 scale, int order, float bobAmount)
     {
         UserID = userID;
+        Order = order;
+        BobAmount = bobAmount;
         Position = position;
         Scale = scale;
     }

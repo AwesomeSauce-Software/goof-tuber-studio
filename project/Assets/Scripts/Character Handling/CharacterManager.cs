@@ -54,7 +54,6 @@ public class CharacterManager : MonoBehaviour
     {
         var extCharacter = Instantiate(characterPrefab);
         extCharacter.transform.SetParent(transform);
-        extCharacter.transform.localScale = Vector3.one;
         extCharacter.UserID = userID;
 
         int index = System.Array.FindIndex(charactersConfig.CharacterPlacements, c => c.UserID == userID);
@@ -63,10 +62,18 @@ public class CharacterManager : MonoBehaviour
             var placement = charactersConfig.CharacterPlacements[index];
             extCharacter.InitialPosition = placement.Position;
             extCharacter.transform.localScale = placement.Scale;
+            extCharacter.BobAmount = placement.BobAmount;
+            extCharacter.Order = placement.Order;
+        }
+        else
+        {
+            extCharacter.transform.localScale = Vector3.one;
+            extCharacter.Order = characters.Count;
+            extCharacter.BobAmount = 0.5f;
         }
 
         characters.Add(extCharacter);
-        UpdateSorting();
+        SwapCharacterOrdering(extCharacter, extCharacter.Order);
 
         return extCharacter;
     }
@@ -81,21 +88,18 @@ public class CharacterManager : MonoBehaviour
     public void UpdateLineLeft(float value)
     {
         lineLeft = value;
-        UpdateLineLimits();
         UpdateSorting();
     }
 
     public void UpdateLineRight(float value)
     {
         lineRight = value;
-        UpdateLineLimits();
         UpdateSorting();
     }
 
     public void UpdateCharactersVisible(float value)
     {
         charactersVisible = Mathf.CeilToInt(value);
-        UpdateLineLimits();
         UpdateSorting();
     }
 
@@ -105,8 +109,26 @@ public class CharacterManager : MonoBehaviour
         UpdateSorting();
     }
 
+    public void SetCharacterOrderToBack(CharacterAnimator character)
+    {
+        SwapCharacterOrdering(character, characters.Count - 1);
+    }
+
+    public void SwapCharacterOrdering(CharacterAnimator character, int newOrder)
+    {
+        if (newOrder >= characters.Count)
+            newOrder = characters.Count - 1;
+
+        var currentCharacter = characters[newOrder];
+        currentCharacter.Order = character.Order;
+        character.Order = newOrder;
+
+        UpdateSorting();
+    }
+
     public void UpdateSorting()
     {
+        UpdateLineLimits();
         switch (sortingMode)
         {
             case eSortingMode.FreeLine:
@@ -132,7 +154,8 @@ public class CharacterManager : MonoBehaviour
         foreach (var character in characters)
         {
             int index = characterPlacements.FindIndex(c => c.UserID == character.UserID);
-            var placement = new CharacterPlacement(character.UserID, character.InitialPosition, character.transform.localScale);
+            var placement = new CharacterPlacement(character.UserID, character.InitialPosition, 
+                character.transform.localScale, character.Order, character.BobAmount);
 
             if (index >= 0)
                 characterPlacements[index] = placement;
@@ -147,6 +170,7 @@ public class CharacterManager : MonoBehaviour
     void ValidateCharacterList()
     {
         characters.RemoveAll(c => c == null);
+        characters.Sort((a, b) => a.Order > b.Order ? 1 : -1);
     }
 
     void LineSorting(bool overrideSort = false)
@@ -162,7 +186,6 @@ public class CharacterManager : MonoBehaviour
             float direction = sortingMode == eSortingMode.LineAnchorRight || overrideSort ? spacing : 1.0f - spacing;
             var character = characters[i];
             var position = Vector3.Lerp(lineMaxRight, lineMaxLeft, direction);
-            position.z = i * 0.001f;
 
             character.InitialPosition = position;
             spacing += lineIncrement;
@@ -229,6 +252,8 @@ public class CharacterManager : MonoBehaviour
                     {
                         characters[index].InitialPosition = characterConfig.Position;
                         characters[index].transform.localScale = characterConfig.Scale;
+                        characters[index].Order = characterConfig.Order;
+                        characters[index].BobAmount = characterConfig.BobAmount;
                     }
                 }
             }
@@ -237,7 +262,7 @@ public class CharacterManager : MonoBehaviour
         {
             charactersConfig = new CharactersConfig();
             charactersConfig.CharacterPlacements = new CharacterPlacement[1];
-            charactersConfig.CharacterPlacements[0] = new CharacterPlacement("user", Vector3.zero, Vector3.one);
+            charactersConfig.CharacterPlacements[0] = new CharacterPlacement("user", Vector3.zero, Vector3.one, 0, 0.5f);
         }
     }
 
@@ -251,7 +276,6 @@ public class CharacterManager : MonoBehaviour
     {
         AddExistingCharacters();
         LoadConfigCache();
-        UpdateLineLimits();
     }
 
 #if UNITY_EDITOR

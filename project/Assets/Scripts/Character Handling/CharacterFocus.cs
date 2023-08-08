@@ -19,6 +19,13 @@ public class CharacterFocus : MonoBehaviour
     [Header("Scaler Element")]
     [SerializeField] InputField widthInput;
     [SerializeField] InputField heightInput;
+    [Header("Bobber Element")]
+    [SerializeField] Slider bobSlider;
+    [Header("Ordering Element")]
+    [SerializeField] Button sendToFrontButton;
+    [SerializeField] Button sendToBackButton;
+    [SerializeField] Button orderUpButton;
+    [SerializeField] Button orderDownButton;
 
     CharacterManager characterManager;
 
@@ -29,7 +36,7 @@ public class CharacterFocus : MonoBehaviour
     {
         targetCharacter = newCharacter;
 
-        UpdateCharacterImage();
+        UpdateCharacterUI();
     }
 
     public void SetCharacterSpriteSize()
@@ -42,6 +49,45 @@ public class CharacterFocus : MonoBehaviour
             targetCharacter.SetSpriteSize(width, height);
     }
 
+    public void GetNextCharacter()
+    {
+        SetCharacterFromList(1);
+    }
+
+    public void GetPreviousCharacter()
+    {
+        SetCharacterFromList(-1);
+    }
+
+    public void SetCharacterToFront()
+    {
+        characterManager.SwapCharacterOrdering(targetCharacter, 0);
+        UpdateOrderButtons();
+    }    
+
+    public void SetCharacterToBack()
+    {
+        characterManager.SetCharacterOrderToBack(targetCharacter);
+        UpdateOrderButtons();
+    }
+
+    public void IncrementCharacterOrder()
+    {
+        characterManager.SwapCharacterOrdering(targetCharacter, targetCharacter.Order + 1);
+        UpdateOrderButtons();
+    }
+
+    public void DecrementCharacterOrder()
+    {
+        characterManager.SwapCharacterOrdering(targetCharacter, targetCharacter.Order - 1);
+        UpdateOrderButtons();
+    }
+
+    public void SetCharacterBobAmount(float value)
+    {
+        targetCharacter.BobAmount = value;
+    }
+
     public void SetUIObjectsActive(bool value)
     {
         bool sortingModeFree = characterManager.SortingMode == CharacterManager.eSortingMode.Free || characterManager.SortingMode == CharacterManager.eSortingMode.FreeLine;
@@ -50,13 +96,43 @@ public class CharacterFocus : MonoBehaviour
 
         if (value)
         {
-            UpdateCharacterImage();
+            UpdateCharacterUI();
         }
     }
 
-    void UpdateCharacterImage()
+    void SetCharacterFromList(int direction)
+    {
+        var characterList = characterManager.Characters;
+
+        int index = characterList.FindIndex(c => c == targetCharacter);
+        if (index >= 0)
+        {
+            index += direction;
+            if (index < 0)
+                index = characterList.Count - 1;
+            else if (index >= characterList.Count)
+                index = 0;
+
+            SetTargetCharacter(characterList[index]);
+        }
+    }
+
+    void UpdateOrderButtons()
+    {
+        int characterCount = characterManager.Characters.Count;
+        bool isFront = targetCharacter.Order == 0;
+        bool isBack = targetCharacter.Order == characterCount - 1;
+        sendToFrontButton.interactable = !isFront;
+        sendToBackButton.interactable = !isBack;
+        orderUpButton.interactable = !isFront;
+        orderDownButton.interactable = !isBack;
+    }
+
+    void UpdateCharacterUI()
     {
         characterImage.sprite = targetCharacter.CharacterRenderer.sprite;
+        bobSlider.value = targetCharacter.BobAmount;
+        UpdateOrderButtons();
     }
 
     bool IsPointInSpriteBounds(SpriteRenderer spriteRenderer, Vector3 point, float boundsMultiplier = 1.0f)
@@ -124,8 +200,6 @@ public class CharacterFocus : MonoBehaviour
             var characterList = characterManager.Characters;
             var worldPointer = GetWorldPointer();
 
-            characterList.Sort((a, b) => a.transform.position.z > b.transform.position.z ? 1 : -1);
-
             foreach (var character in characterList)
             {
                 var sprite = character.CharacterRenderer.sprite;
@@ -166,9 +240,13 @@ public class CharacterFocus : MonoBehaviour
         UpdateControls();
     }
 
+    private void Start()
+    {
+        SetTargetCharacter(targetCharacter);
+    }
+
     void Awake()
     {
         characterManager = GetComponent<CharacterManager>();
-        SetTargetCharacter(targetCharacter);
     }
 }
